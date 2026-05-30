@@ -119,7 +119,7 @@
 </div>
 
 <!-- 隊員表單 Modal -->
-<div id="member-form-modal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 p-4"><div class="bg-stone-900 rounded-2xl max-w-md w-full p-5"><h3 id="member-form-title" class="font-black text-lg">新增隊員</h3><input type="hidden" id="edit-member-id"><div class="space-y-3 mt-3"><input type="text" id="member-name" placeholder="姓名" class="w-full p-2 bg-stone-950 rounded-lg"><select id="member-primary"><option>左槳手</option><option>右槳手</option><option>鼓手</option><option>舵手</option></select><select id="member-secondary"><option>無</option><option>左槳手</option><option>右槳手</option><option>鼓手</option><option>舵手</option></select><input type="number" id="member-weight" placeholder="體重(kg)" class="w-full p-2 bg-stone-950 rounded-lg"><select id="member-avatar"><option>💪</option><option>🔥</option><option>⚡</option><option>👨‍端</option><option>👩‍端</option><option>😎</option></select></div><div class="flex justify-end gap-3 mt-5"><button onclick="closeMemberForm()">取消</button><button onclick="saveMemberFromAdmin()" class="bg-red-600 px-5 py-2 rounded-xl">儲存</button></div></div></div>
+<div id="member-form-modal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 p-4"><div class="bg-stone-900 rounded-2xl max-w-md w-full p-5"><h3 id="member-form-title" class="font-black text-lg">新增隊員</h3><input type="text" id="member-code" placeholder="編號 (自動)" readonly class="w-full p-2 bg-stone-800 rounded-lg text-stone-400 mb-2"><input type="hidden" id="edit-member-id"><div class="space-y-3 mt-3"><input type="text" id="member-name" placeholder="姓名" class="w-full p-2 bg-stone-950 rounded-lg"><select id="member-primary"><option>左槳手</option><option>右槳手</option><option>鼓手</option><option>舵手</option></select><select id="member-secondary"><option>無</option><option>左槳手</option><option>右槳手</option><option>鼓手</option><option>舵手</option></select><input type="number" id="member-weight" placeholder="體重(kg)" class="w-full p-2 bg-stone-950 rounded-lg"><select id="member-avatar"><option>💪</option><option>🔥</option><option>⚡</option><option>👨‍端</option><option>👩‍端</option><option>😎</option></select></div><div class="flex justify-end gap-3 mt-5"><button onclick="closeMemberForm()">取消</button><button onclick="saveMemberFromAdmin()" class="bg-red-600 px-5 py-2 rounded-xl">儲存</button></div></div></div>
 
 <!-- 手動操練 Modal -->
 <div id="practice-manual-modal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 p-4"><div class="bg-stone-900 rounded-2xl max-w-md w-full p-5"><h3 class="font-black">新增操練紀錄</h3><input type="date" id="manual-date" class="w-full p-2 mt-2 bg-stone-950 rounded-lg"><div class="grid grid-cols-2 gap-2 mt-2"><input type="number" id="manual-distance" placeholder="距離 km" class="p-2 bg-stone-950 rounded-lg"><input type="number" id="manual-hours" placeholder="時數 h" class="p-2 bg-stone-950 rounded-lg"></div><div><p class="text-xs mt-2">出席隊友</p><div id="manual-attendees-list" class="grid grid-cols-2 gap-1 max-h-40 overflow-y-auto p-2 bg-stone-950 rounded-lg"></div></div><div class="flex justify-end gap-3 mt-4"><button onclick="closePracticeModal()">取消</button><button onclick="saveManualPracticeFromAdmin()" class="bg-red-600 px-4 py-2 rounded-xl">儲存</button></div></div></div>
@@ -170,18 +170,31 @@
     { id:"m8", code:"c08", name:"Pinky", primaryRole:"右槳手", secondaryRole:"鼓手", weight:55, avatar:"👩‍端", cheers:5 }
 ];
     function loadData() {
-        members = JSON.parse(localStorage.getItem('dragon_members') || JSON.stringify(defaultMembers));
-        practices = JSON.parse(localStorage.getItem('dragon_practices') || '[]');
-        interactions = JSON.parse(localStorage.getItem('dragon_interactions') || '[]');
-        let storedRaces = localStorage.getItem('dragon_race_records');
-        if(storedRaces) {
-            raceRecords = JSON.parse(storedRaces);
-            // 確保每筆都有 id (舊資料兼容)
-            raceRecords = raceRecords.map((r, idx) => r.id ? r : { ...r, id: 'r_legacy_' + idx });
-        } else {
-            raceRecords = [...fullRaceData];
-        }
+    let storedMembers = localStorage.getItem('dragon_members');
+    if (storedMembers) {
+        members = JSON.parse(storedMembers);
+        // 为没有 code 的旧队员自动生成编号
+        let needSave = false;
+        members.forEach((m, idx) => {
+            if (!m.code) {
+                m.code = `c${(idx + 1).toString().padStart(2, '0')}`;
+                needSave = true;
+            }
+        });
+        if (needSave) saveAll();
+    } else {
+        members = JSON.parse(JSON.stringify(defaultMembers));
     }
+    practices = JSON.parse(localStorage.getItem('dragon_practices') || '[]');
+    interactions = JSON.parse(localStorage.getItem('dragon_interactions') || '[]');
+    let storedRaces = localStorage.getItem('dragon_race_records');
+    if (storedRaces) {
+        raceRecords = JSON.parse(storedRaces);
+        raceRecords = raceRecords.map((r, idx) => r.id ? r : { ...r, id: 'r_legacy_' + idx });
+    } else {
+        raceRecords = [...fullRaceData];
+    }
+}
     function saveAll() {
         localStorage.setItem('dragon_members', JSON.stringify(members));
         localStorage.setItem('dragon_practices', JSON.stringify(practices));
@@ -203,17 +216,46 @@
     function editMemberById(id){ let m=members.find(x=>x.id===id); if(m){ document.getElementById('edit-member-id').value=m.id; document.getElementById('member-name').value=m.name; document.getElementById('member-primary').value=m.primaryRole; document.getElementById('member-secondary').value=m.secondaryRole; document.getElementById('member-weight').value=m.weight; document.getElementById('member-avatar').value=m.avatar; document.getElementById('member-form-title').innerText='編輯隊員'; document.getElementById('member-form-modal').classList.remove('hidden'); } }
     function openMemberForm(){ document.getElementById('edit-member-id').value=''; document.getElementById('member-name').value=''; document.getElementById('member-primary').value='左槳手'; document.getElementById('member-secondary').value='無'; document.getElementById('member-weight').value=''; document.getElementById('member-avatar').value='💪'; document.getElementById('member-form-title').innerText='新增隊員'; document.getElementById('member-form-modal').classList.remove('hidden'); }
     function closeMemberForm(){ document.getElementById('member-form-modal').classList.add('hidden');}
-    function saveMemberFromAdmin(){ let id=document.getElementById('edit-member-id').value; let name=document.getElementById('member-name').value; let primary=document.getElementById('member-primary').value; let secondary=document.getElementById('member-secondary').value; let weight=parseInt(document.getElementById('member-weight').value); let avatar=document.getElementById('member-avatar').value; if(!name||!primary||!weight) return; if(id){ let idx=members.findIndex(m=>m.id===id); if(idx!==-1) members[idx]={...members[idx],name,primaryRole:primary,secondaryRole:secondary,weight,avatar}; } 
-    } else { 
-    // 自动生成编号：找到当前最大编号，例如 c01 -> c02
-    let maxNum = 0;
-    members.forEach(m => {
-        let match = m.code.match(/c(\d+)/);
-        if (match) maxNum = Math.max(maxNum, parseInt(match[1]));
-    });
-    let newCode = `c${(maxNum+1).toString().padStart(2,'0')}`;
-    members.push({id:'m'+Date.now(), code:newCode, name, primaryRole:primary, secondaryRole:secondary, weight, avatar, cheers:0});
-} } saveAll(); closeMemberForm(); renderAdminMemberTable(); renderRoster(); renderRanking(); renderTacticsUI(); }
+    function saveMemberFromAdmin() {
+    let id = document.getElementById('edit-member-id').value;
+    let name = document.getElementById('member-name').value;
+    let primary = document.getElementById('member-primary').value;
+    let secondary = document.getElementById('member-secondary').value;
+    let weight = parseInt(document.getElementById('member-weight').value);
+    let avatar = document.getElementById('member-avatar').value;
+    if (!name || !primary || !weight) return;
+
+    if (id) {
+        let idx = members.findIndex(m => m.id === id);
+        if (idx !== -1) {
+            members[idx] = { ...members[idx], name, primaryRole: primary, secondaryRole: secondary, weight, avatar };
+        }
+    } else {
+        // 自动生成编号（c01, c02...）
+        let maxNum = 0;
+        members.forEach(m => {
+            let match = m.code && m.code.match(/c(\d+)/);
+            if (match) maxNum = Math.max(maxNum, parseInt(match[1]));
+        });
+        let newCode = `c${(maxNum + 1).toString().padStart(2, '0')}`;
+        members.push({
+            id: 'm' + Date.now(),
+            code: newCode,
+            name: name,
+            primaryRole: primary,
+            secondaryRole: secondary,
+            weight: weight,
+            avatar: avatar,
+            cheers: 0
+        });
+    }
+    saveAll();
+    closeMemberForm();
+    renderAdminMemberTable();
+    renderRoster();
+    renderRanking();
+    renderTacticsUI();
+}
     function renderAdminPracticeList(){ let container=document.getElementById('admin-practice-list'); container.innerHTML=practices.slice().reverse().map(p=>`<div class="bg-stone-800 p-2 rounded-lg flex justify-between"><div>${p.date} ${p.distance}km / ${formatHours(p.hours)} 出席${p.attendees.length}人</div><button onclick="deletePracticeById('${p.id}')" class="text-red-400">刪除</button></div>`).join(''); }
     function deletePracticeById(id){ practices=practices.filter(p=>p.id!==id); saveAll(); renderAdminPracticeList(); renderRoster(); renderRanking(); }
     function openManualPracticeAdmin(){ document.getElementById('practice-manual-modal').classList.remove('hidden'); let div=document.getElementById('manual-attendees-list'); div.innerHTML=members.map(m=>`<label class="flex items-center gap-1"><input type="checkbox" value="${m.id}" class="attend-check"> ${m.name}</label>`).join(''); document.getElementById('manual-date').value=new Date().toISOString().slice(0,10); }
