@@ -222,30 +222,25 @@ function importPracticeFromSheet(csv) {
     const lines = csv.split(/\r?\n/);
     if (lines.length < 2) { alert('CSV 至少包含標題列和一行數據'); return; }
 
-    // 解析标题行，兼容 BOM 头
-    let headerLine = lines[0].trim();
-    if (headerLine.charCodeAt(0) === 0xFEFF) headerLine = headerLine.slice(1);
-    const headers = headerLine.split(',').map(h => h.trim());
-    
-    const dateIdx = headers.findIndex(h => h.includes('日期'));
-    const distIdx = headers.findIndex(h => h.includes('距離') || h.toLowerCase().includes('km'));
-    const hoursIdx = headers.findIndex(h => h.includes('時數') || h.includes('小時') || h.toLowerCase().includes('h'));
-    const membersIdx = headers.findIndex(h => h.includes('出席') || h.includes('隊員'));
-    
-    if (dateIdx === -1 || distIdx === -1 || hoursIdx === -1 || membersIdx === -1) {
-        alert(`CSV 標題列缺少必要欄位。找到的欄位：${headers.join(', ')}\n需要包含：日期, 距離, 時數, 出席隊員`);
-        return;
+    // 自动检测列位置：默认第1列日期、第2列距离、第3列时间、第4列出席队
+    // 同时兼容可能存在的标题行（如“日期, A, B, C, D”），我们忽略标题行，直接从第2行开始按位置读
+    let startRow = 1;
+    let firstLine = lines[0].trim();
+    // 如果第一行看起来像是标题（包含中文字符且不含日期格式），则跳过第一行
+    const hasChineseHeader = /[\u4e00-\u9fa5]/.test(firstLine) && !firstLine.match(/\d{4}年/);
+    if (hasChineseHeader) {
+        startRow = 1;
+    } else {
+        startRow = 0; // 如果第一行就是数据，则从0开始
     }
 
-    // ========== 輔助函數 ==========
-    // 日期轉換：2026年5月28日 → 2026-05-28
+    // 辅助函数
     function parseDateToYMD(dateStr) {
         let match = dateStr.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);
         if (match) {
             let year = match[1], month = match[2].padStart(2,'0'), day = match[3].padStart(2,'0');
             return `${year}-${month}-${day}`;
         }
-        // 支援 2026/5/28 或 2026-5-28
         let match2 = dateStr.match(/(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
         if (match2) {
             let year = match2[1], month = match2[2].padStart(2,'0'), day = match2[3].padStart(2,'0');
@@ -254,7 +249,6 @@ function importPracticeFromSheet(csv) {
         return null;
     }
 
-    // 距離轉換：5,501 公尺 → 5.501 km；8.86 km → 8.86
     function parseDistanceToKm(distStr) {
         let numMatch = distStr.match(/(\d+(?:[.,]\d+)?)/);
         if (!numMatch) return NaN;
@@ -265,43 +259,38 @@ function importPracticeFromSheet(csv) {
         return num;
     }
 
-    // 時間轉換：1:01:23 → 1.023 小時；1小時30分 → 1.5
     function parseTimeToHours(timeStr) {
-        // 格式 HH:MM:SS
         let parts = timeStr.split(':');
         if (parts.length === 3) {
             let h = parseInt(parts[0]), m = parseInt(parts[1]), s = parseInt(parts[2]);
             if (!isNaN(h) && !isNaN(m) && !isNaN(s)) return h + m/60 + s/3600;
         }
-        // 格式 1小時30分
         let match = timeStr.match(/(\d+)\s*小時\s*(\d+)\s*分/);
         if (match) {
             return parseInt(match[1]) + parseInt(match[2])/60;
         }
-        // 純小時小數
         let hourNum = parseFloat(timeStr);
         if (!isNaN(hourNum)) return hourNum;
         return NaN;
     }
 
-    // ========== 處理每一行 ==========
     let importedCount = 0, skipCount = 0;
-    const failedNames = new Set(); // 記錄未匹配到的隊員名
+    const failedNames = new Set();
 
-    for (let i = 1; i < lines.length; i++) {
+    for (let i = startRow; i < lines.length; i++) {
         const line = lines[i].trim();
         if (!line) continue;
-        
         const cols = line.split(',').map(c => c.trim());
         if (cols.length < 4) {
             skipCount++;
             continue;
         }
 
-        const rawDate = cols[dateIdx];
-        const rawDist = cols[distIdx];
-        const rawHours = cols[hoursIdx];
-        let memberNames = cols[membersIdx].split(/[,;、]+/).map(n => n.trim()).filter(n => n);
+        // 按位置取列：索引0=日期，1=距離，2=時數，3=出席隊員
+        const rawDate = cols[0];
+        const rawDist = cols[1];
+        const rawHours = cols[2];
+        let memberNames = cols[3].split(/[,;、]+/).map(n => n.trim()).filter(n => n);
 
         const date = parseDateToYMD(rawDate);
         const dist = parseDistanceToKm(rawDist);
@@ -312,13 +301,12 @@ function importPracticeFromSheet(csv) {
             continue;
         }
 
-        // 匹配隊員（不區分大小寫，去除空白）
         const attendees = [];
         for (let name of memberNames) {
+            // 不区分大小写匹配
             const member = members.find(m => 
                 m.name === name || 
-                m.name.toLowerCase() === name.toLowerCase() ||
-                m.name === name.replace(/\s/g, '')
+                m.name.toLowerCase() === name.toLowerCase()
             );
             if (member) {
                 attendees.push(member.id);
@@ -354,7 +342,7 @@ function importPracticeFromSheet(csv) {
         }
         alert(`成功匯入 ${importedCount} 筆操練紀錄，跳過 ${skipCount} 筆無效資料。${warnMsg}`);
     } else {
-        alert(`沒有匯入任何操練紀錄。可能原因：\n1. 隊員姓名不存在系統中（請檢查「隊員資料庫」）\n2. CSV 格式錯誤（請確保標題列為：日期,距離,時數,出席隊員）\n3. 日期/距離/時間格式不支援`);
+        alert(`沒有匯入任何操練紀錄。可能原因：\n1. 隊員姓名不存在系統中（請檢查「隊員資料庫」）\n2. CSV 格式不正確\n3. 日期/距離/時間格式不支援\n\n請確保 CSV 的前4欄依序為：日期, 距離, 時數, 出席隊員（用逗號分開）`);
     }
 }
     // OCR 處理
