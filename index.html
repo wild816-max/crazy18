@@ -218,61 +218,105 @@
         }
     }
 
-    function importPracticeFromSheet(csv) {
-        const lines = csv.split(/\r?\n/);
-        if (lines.length < 2) { alert('CSV 至少包含標題列和一行數據'); return; }
-        const headers = lines[0].split(',').map(h => h.trim());
-        const dateIdx = headers.findIndex(h => h.includes('日期'));
-        const distIdx = headers.findIndex(h => h.includes('距離') || h.includes('km'));
-        const hoursIdx = headers.findIndex(h => h.includes('時數') || h.includes('小時') || h.includes('h'));
-        const membersIdx = headers.findIndex(h => h.includes('出席') || h.includes('隊員'));
-        if (dateIdx === -1 || distIdx === -1 || hoursIdx === -1 || membersIdx === -1) {
-            alert('CSV 標題列必須包含: 日期, 距離, 時數, 出席隊員');
-            return;
-        }
-        let importedCount = 0, skipCount = 0;
-        for (let i = 1; i < lines.length; i++) {
-            const line = lines[i].trim();
-            if (!line) continue;
-            const cols = line.split(',').map(c => c.trim());
-            if (cols.length < 4) continue;
-            const date = cols[dateIdx];
-            const dist = parseFloat(cols[distIdx]);
-            const hours = parseFloat(cols[hoursIdx]);
-            let memberNames = cols[membersIdx].split(/[,;、]+/).map(n => n.trim()).filter(n => n);
-            if (!date || isNaN(dist) || isNaN(hours) || memberNames.length === 0) {
-                skipCount++;
-                continue;
-            }
-            const attendees = [];
-            for (let name of memberNames) {
-                const member = members.find(m => m.name === name);
-                if (member) attendees.push(member.id);
-                else console.warn(`未找到隊員: ${name}`);
-            }
-            if (attendees.length === 0) {
-                skipCount++;
-                continue;
-            }
-            practices.push({
-                id: 'p_' + Date.now() + '_' + i,
-                date: date,
-                distance: dist,
-                hours: hours,
-                attendees: attendees
-            });
-            importedCount++;
-        }
-        if (importedCount > 0) {
-            saveAll();
-            renderAdminPracticeList();
-            renderRoster();
-            renderRanking();
-            alert(`成功匯入 ${importedCount} 筆操練紀錄，跳過 ${skipCount} 筆無效資料`);
-        } else {
-            alert('沒有匯入任何有效的操練紀錄，請檢查 CSV 格式和隊員姓名是否匹配');
-        }
+   function importPracticeFromSheet(csv) {
+    const lines = csv.split(/\r?\n/);
+    if (lines.length < 2) { alert('CSV 至少包含標題列和一行數據'); return; }
+    const headers = lines[0].split(',').map(h => h.trim());
+    const dateIdx = headers.findIndex(h => h.includes('日期'));
+    const distIdx = headers.findIndex(h => h.includes('距離') || h.includes('km'));
+    const hoursIdx = headers.findIndex(h => h.includes('時數') || h.includes('小時') || h.includes('h'));
+    const membersIdx = headers.findIndex(h => h.includes('出席') || h.includes('隊員'));
+    if (dateIdx === -1 || distIdx === -1 || hoursIdx === -1 || membersIdx === -1) {
+        alert('CSV 標題列必須包含: 日期, 距離, 時數, 出席隊員');
+        return;
     }
+
+    // 輔助函數：將 "2026年5月28日" 轉為 "2026-05-28"
+    function parseDateToYMD(dateStr) {
+        let match = dateStr.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);
+        if (match) {
+            let year = match[1], month = match[2].padStart(2,'0'), day = match[3].padStart(2,'0');
+            return `${year}-${month}-${day}`;
+        }
+        // 若已是 YYYY-MM-DD 則直接返回
+        if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+        return null;
+    }
+
+    // 輔助函數：將 "5,501 公尺" / "8.86 km" 轉為公里數
+    function parseDistanceToKm(distStr) {
+        let numMatch = distStr.match(/(\d+(?:[.,]\d+)?)/);
+        if (!numMatch) return NaN;
+        let num = parseFloat(numMatch[1].replace(',', '.'));
+        if (distStr.includes('公尺') || distStr.includes('米')) {
+            return num / 1000;
+        }
+        return num; // 假設已是公里
+    }
+
+    // 輔助函數：將 "1:01:23" 轉為小時數
+    function parseTimeToHours(timeStr) {
+        let parts = timeStr.split(':');
+        if (parts.length === 3) {
+            let h = parseInt(parts[0]), m = parseInt(parts[1]), s = parseInt(parts[2]);
+            return h + m/60 + s/3600;
+        }
+        return NaN;
+    }
+
+    let importedCount = 0, skipCount = 0;
+    for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+        const cols = line.split(',').map(c => c.trim());
+        if (cols.length < 4) continue;
+
+        let rawDate = cols[dateIdx];
+        let rawDist = cols[distIdx];
+        let rawHours = cols[hoursIdx];
+        let memberNames = cols[membersIdx].split(/[,;、]+/).map(n => n.trim()).filter(n => n);
+
+        const date = parseDateToYMD(rawDate);
+        const dist = parseDistanceToKm(rawDist);
+        const hours = parseTimeToHours(rawHours);
+
+        if (!date || isNaN(dist) || isNaN(hours) || memberNames.length === 0) {
+            skipCount++;
+            continue;
+        }
+
+        const attendees = [];
+        for (let name of memberNames) {
+            // 嘗試精確匹配或忽略大小寫
+            const member = members.find(m => m.name === name || m.name.toLowerCase() === name.toLowerCase());
+            if (member) attendees.push(member.id);
+            else console.warn(`未找到隊員: ${name}`);
+        }
+        if (attendees.length === 0) {
+            skipCount++;
+            continue;
+        }
+
+        practices.push({
+            id: 'p_' + Date.now() + '_' + i,
+            date: date,
+            distance: dist,
+            hours: hours,
+            attendees: attendees
+        });
+        importedCount++;
+    }
+
+    if (importedCount > 0) {
+        saveAll();
+        renderAdminPracticeList();
+        renderRoster();
+        renderRanking();
+        alert(`成功匯入 ${importedCount} 筆操練紀錄，跳過 ${skipCount} 筆無效資料`);
+    } else {
+        alert('沒有匯入任何有效的操練紀錄，請檢查 CSV 格式和隊員姓名是否匹配');
+    }
+}
     // OCR 處理
     async function handleOcrImage(file) {
         const { data: { text } } = await Tesseract.recognize(file, 'chi_tra+eng');
