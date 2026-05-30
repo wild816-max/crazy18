@@ -85,7 +85,12 @@
         <div class="flex gap-2 mt-3">
             <button onclick="exportDataToFile()" class="bg-stone-800 py-2 rounded-xl text-xs w-full border border-stone-600">📤 導出數據 (JSON備份)</button>
             <button onclick="importDataFromFile()" class="bg-stone-700 py-2 rounded-xl text-xs w-full">📥 導入數據 (恢復備份)</button>
-        </div></div>
+        </div>
+        <!-- 新增強制同步按鈕 -->
+        <div class="flex gap-2 mt-2">
+            <button onclick="syncCurrentDataToCloud()" class="bg-red-700 py-2 rounded-xl text-xs w-full">☁️ 強制同步到雲端</button>
+        </div>
+        </div>
         
         <!-- 操練管理 -->
         <div class="bg-stone-900 rounded-2xl p-5 space-y-4"><h3 class="font-black text-lg">🚣 操練紀錄管理</h3>
@@ -328,7 +333,7 @@
       renderTacticsUI();
     } catch (error) {
       console.error("Firebase 讀取失敗", error);
-      alert("無法連接雲端數據，請檢查網路後刷新頁面。");
+      alert("無法連接雲端數據，請檢查網路後刷新頁面。\n若已連網，可能是 Firebase 安全規則未開放，請至控制台設定為測試模式。");
     }
   }
 
@@ -342,9 +347,21 @@
         setDoc(doc(db, "team", "settings"), { nextRace })
       ]);
       console.log("數據已同步到 Firebase");
+      return true;
     } catch (error) {
       console.error("保存到 Firebase 失敗", error);
       alert("數據保存失敗，請檢查網絡。");
+      return false;
+    }
+  }
+
+  // 新增強制同步函數
+  async function syncCurrentDataToCloud() {
+    if (confirm('確定要將當前頁面顯示的所有數據（隊員、操練、賽事）覆蓋到雲端嗎？其他設備將同步此更改。')) {
+      const success = await saveAll();
+      if (success) {
+        alert('數據已強制同步到 Firebase 雲端！');
+      }
     }
   }
 
@@ -515,7 +532,7 @@
   // 管理員介面
   function renderAdminMemberTable() {
     let tbody = document.getElementById('admin-member-table');
-    tbody.innerHTML = members.map(m => `<tr><td class="font-mono text-red-300">${m.code}</td><td>${m.avatar}</td><td>${m.name}<tr><td>${m.primaryRole}</td><td>${m.secondaryRole}</td><td>${m.weight}</td><td><button onclick="editMemberById('${m.id}')" class="bg-stone-800 px-2 py-0.5 rounded">修改</button> <button onclick="deleteMemberById('${m.id}')" class="text-red-400">刪除</button></tr>`).join('');
+    tbody.innerHTML = members.map(m => `<tr><td class="font-mono text-red-300">${m.code}</td><td>${m.avatar}</td><td>${m.name}</td><td>${m.primaryRole}</td><td>${m.secondaryRole}</td><td>${m.weight}</td><td><button onclick="editMemberById('${m.id}')" class="bg-stone-800 px-2 py-0.5 rounded">修改</button> <button onclick="deleteMemberById('${m.id}')" class="text-red-400">刪除</button></td>`).join('');
   }
 
   async function deleteMemberById(id) {
