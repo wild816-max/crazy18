@@ -100,7 +100,10 @@
                 <div id="ocr-preview-area" class="mt-2 text-xs text-stone-400"></div>
                 <div id="ocr-result-card" class="hidden bg-stone-950 p-3 rounded-xl text-left space-y-2"><div class="flex justify-between"><span class="text-red-400 font-bold">辨識結果</span><button onclick="clearOCR()">✕</button></div><div><label>距離(km)</label><input type="number" step="0.01" id="ocr-distance" class="w-full p-1.5 bg-stone-900 rounded"></div><div><label>總時數(小時)</label><input type="number" step="0.01" id="ocr-hours" class="w-full p-1.5 bg-stone-900 rounded"></div><div><label>操練日期</label><input type="date" id="ocr-date" class="w-full p-1.5 bg-stone-900 rounded"></div><div><label>出席隊員</label><div id="ocr-attendees-list" class="grid grid-cols-2 gap-1 max-h-32 overflow-y-auto p-2 bg-stone-900 rounded"></div></div><button onclick="saveOcrPractice()" class="w-full bg-red-600 py-1.5 rounded-lg text-sm font-bold">儲存</button></div>
             </div>
-            <div class="flex gap-2"><button onclick="openManualPracticeAdmin()" class="bg-red-950/50 px-4 py-2 rounded-lg text-sm">✍️ 手動新增操練</button></div>
+<div class="flex gap-2">
+    <button onclick="openManualPracticeAdmin()" class="bg-red-950/50 px-4 py-2 rounded-lg text-sm">✍️ 手動新增操練</button>
+    <button onclick="openPracticeSheetImport()" class="bg-stone-700 px-4 py-2 rounded-lg text-sm">📎 從 Google Sheet 匯入操練紀錄</button>
+</div>
             <div><h4 class="font-bold text-sm">操練日誌</h4><div id="admin-practice-list" class="max-h-64 overflow-y-auto space-y-2 mt-2"></div></div>
         </div>
 
@@ -205,6 +208,71 @@
     function openManualPracticeAdmin(){ document.getElementById('practice-manual-modal').classList.remove('hidden'); let div=document.getElementById('manual-attendees-list'); div.innerHTML=members.map(m=>`<label class="flex items-center gap-1"><input type="checkbox" value="${m.id}" class="attend-check"> ${m.name}</label>`).join(''); document.getElementById('manual-date').value=new Date().toISOString().slice(0,10); }
     function closePracticeModal(){ document.getElementById('practice-manual-modal').classList.add('hidden');}
     function saveManualPracticeFromAdmin(){ let date=document.getElementById('manual-date').value; let dist=parseFloat(document.getElementById('manual-distance').value); let hrs=parseFloat(document.getElementById('manual-hours').value); let attendees=Array.from(document.querySelectorAll('#manual-attendees-list input:checked')).map(cb=>cb.value); if(!date||isNaN(dist)||isNaN(hrs)||attendees.length===0) return; practices.push({id:'p'+Date.now(),date,distance:dist,hours:hrs,attendees}); saveAll(); closePracticeModal(); renderAdminPracticeList(); renderRoster(); renderRanking(); }
+        // 操練紀錄 Google Sheet 匯入功能
+    function openPracticeSheetImport() {
+        let url = prompt('請貼上 Google Sheet 發布的 CSV 連結 (包含標題列: 日期,距離(km),時數(h),出席隊員(姓名以逗號分隔))');
+        if (url) {
+            fetch(url).then(r => r.text()).then(csv => {
+                importPracticeFromSheet(csv);
+            }).catch(err => alert('讀取失敗: ' + err));
+        }
+    }
+
+    function importPracticeFromSheet(csv) {
+        const lines = csv.split(/\r?\n/);
+        if (lines.length < 2) { alert('CSV 至少包含標題列和一行數據'); return; }
+        const headers = lines[0].split(',').map(h => h.trim());
+        const dateIdx = headers.findIndex(h => h.includes('日期'));
+        const distIdx = headers.findIndex(h => h.includes('距離') || h.includes('km'));
+        const hoursIdx = headers.findIndex(h => h.includes('時數') || h.includes('小時') || h.includes('h'));
+        const membersIdx = headers.findIndex(h => h.includes('出席') || h.includes('隊員'));
+        if (dateIdx === -1 || distIdx === -1 || hoursIdx === -1 || membersIdx === -1) {
+            alert('CSV 標題列必須包含: 日期, 距離, 時數, 出席隊員');
+            return;
+        }
+        let importedCount = 0, skipCount = 0;
+        for (let i = 1; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (!line) continue;
+            const cols = line.split(',').map(c => c.trim());
+            if (cols.length < 4) continue;
+            const date = cols[dateIdx];
+            const dist = parseFloat(cols[distIdx]);
+            const hours = parseFloat(cols[hoursIdx]);
+            let memberNames = cols[membersIdx].split(/[,;、]+/).map(n => n.trim()).filter(n => n);
+            if (!date || isNaN(dist) || isNaN(hours) || memberNames.length === 0) {
+                skipCount++;
+                continue;
+            }
+            const attendees = [];
+            for (let name of memberNames) {
+                const member = members.find(m => m.name === name);
+                if (member) attendees.push(member.id);
+                else console.warn(`未找到隊員: ${name}`);
+            }
+            if (attendees.length === 0) {
+                skipCount++;
+                continue;
+            }
+            practices.push({
+                id: 'p_' + Date.now() + '_' + i,
+                date: date,
+                distance: dist,
+                hours: hours,
+                attendees: attendees
+            });
+            importedCount++;
+        }
+        if (importedCount > 0) {
+            saveAll();
+            renderAdminPracticeList();
+            renderRoster();
+            renderRanking();
+            alert(`成功匯入 ${importedCount} 筆操練紀錄，跳過 ${skipCount} 筆無效資料`);
+        } else {
+            alert('沒有匯入任何有效的操練紀錄，請檢查 CSV 格式和隊員姓名是否匹配');
+        }
+    }
     // OCR 處理
     async function handleOcrImage(file) {
         const { data: { text } } = await Tesseract.recognize(file, 'chi_tra+eng');
