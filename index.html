@@ -65,7 +65,7 @@
     <div id="records-section" class="hidden space-y-4"><div class="bg-stone-900 p-5 rounded-2xl"><h2 class="text-xl font-black">🏅 歷年戰績榜 (近→遠)</h2><div class="overflow-x-auto mt-3"><table class="w-full text-xs"><thead class="bg-stone-800"><tr><th class="p-2">年份</th><th>賽事</th><th>距離</th><th>最佳時間</th><th>獎項</th></tr></thead><tbody id="race-table-body"></tbody></table></div></div></div>
 
     <!-- 操練排行 -->
-    <div id="rank-section" class="hidden space-y-5"><div class="bg-stone-900 p-5 rounded-2xl"><div class="flex justify-between items-center"><h3 class="font-black">🏆 全員操練累積榜</h3><div class="flex bg-stone-950 p-1 rounded-xl"><button onclick="setRankBy('times')" id="rank-times-btn" class="px-3 py-1 rounded-lg bg-red-600 text-white text-xs">次數</button><button onclick="setRankBy('distance')" id="rank-dist-btn" class="px-3 py-1 rounded-lg text-stone-400 text-xs">里程</button><button onclick="setRankBy('hours')" id="rank-hours-btn" class="px-3 py-1 rounded-lg text-stone-400 text-xs">時數</button></div></div><div class="mt-4 overflow-x-auto"><table class="w-full text-sm"><thead><tr class="text-stone-400 border-b"><th class="text-center">排名</th><th class="text-center">隊員</th><th class="text-center">崗位</th><th class="text-center">累積值</th></tr></thead><tbody id="rank-tbody"></tbody>}</div></div></div>
+    <div id="rank-section" class="hidden space-y-5"><div class="bg-stone-900 p-5 rounded-2xl"><div class="flex justify-between items-center"><h3 class="font-black">🏆 全員操練累積榜</h3><div class="flex bg-stone-950 p-1 rounded-xl"><button onclick="setRankBy('times')" id="rank-times-btn" class="px-3 py-1 rounded-lg bg-red-600 text-white text-xs">次數</button><button onclick="setRankBy('distance')" id="rank-dist-btn" class="px-3 py-1 rounded-lg text-stone-400 text-xs">里程</button><button onclick="setRankBy('hours')" id="rank-hours-btn" class="px-3 py-1 rounded-lg text-stone-400 text-xs">時數</button></div></div><div class="mt-4 overflow-x-auto"><table class="w-full text-sm"><thead><tr class="text-stone-400 border-b"><th class="text-center">排名</th><th class="text-center">隊員</th><th class="text-center">崗位</th><th class="text-center">累積值</th></tr></thead><tbody id="rank-tbody"></tbody></table></div></div></div>
 </main>
 
 <!-- 管理員登入 Modal -->
@@ -79,7 +79,7 @@
         <div class="bg-stone-900 rounded-2xl p-5 border border-red-900/30"><h3 class="font-black text-lg">⏳ 下一場比賽倒數設定</h3><div class="grid grid-cols-2 gap-3 mt-3"><input type="text" id="admin-next-race-name" placeholder="賽事名稱" class="p-2 bg-stone-950 rounded-lg col-span-2"><input type="date" id="admin-next-race-date" class="p-2 bg-stone-950 rounded-lg"><button onclick="updateNextRace()" class="bg-red-600 px-4 py-2 rounded-xl text-sm">儲存倒數目標</button></div></div>
         
         <!-- 隊員資料庫 -->
-        <div class="bg-stone-900 rounded-2xl p-5"><div class="flex justify-between"><h3 class="font-black text-lg">📋 隊員資料庫 (編號僅管理顯示)</h3><button onclick="openMemberForm()" class="bg-red-600 px-3 py-1 rounded-xl text-xs">+ 新增隊員</button></div><div class="overflow-x-auto mt-3"><table class="w-full text-xs"><thead><tr class="text-stone-400"><th>編號</th><th>頭像</th><th>姓名</th><th>主崗位</th><th>副崗位</th><th>體重</th><th>操作</th> </tr></thead><tbody id="admin-member-table"></tbody>}</div><div class="flex gap-2 mt-4"><button onclick="openSheetImport()" class="border border-dashed border-stone-600 py-2 rounded-xl text-xs text-stone-400 w-full">📎 從Google Sheet CSV匯入隊員</button><button onclick="openFullExcelImport()" class="bg-stone-700 py-2 rounded-xl text-xs w-full">📂 匯入Excel (完整覆蓋隊員+操練)</button></div>
+        <div class="bg-stone-900 rounded-2xl p-5"><div class="flex justify-between"><h3 class="font-black text-lg">📋 隊員資料庫 (編號僅管理顯示)</h3><button onclick="openMemberForm()" class="bg-red-600 px-3 py-1 rounded-xl text-xs">+ 新增隊員</button></div><div class="overflow-x-auto mt-3"><table class="w-full text-xs"><thead><tr class="text-stone-400"><th>編號</th><th>頭像</th><th>姓名</th><th>主崗位</th><th>副崗位</th><th>體重</th><th>操作</th></tr></thead><tbody id="admin-member-table"></tbody></table></div><div class="flex gap-2 mt-4"><button onclick="openSheetImport()" class="border border-dashed border-stone-600 py-2 rounded-xl text-xs text-stone-400 w-full">📎 從Google Sheet CSV匯入隊員</button><button onclick="openFullExcelImport()" class="bg-stone-700 py-2 rounded-xl text-xs w-full">📂 匯入Excel (完整覆蓋隊員+操練)</button></div>
         <div class="flex gap-2 mt-3"><button onclick="exportDataToFile()" class="bg-stone-800 py-2 rounded-xl text-xs w-full border border-stone-600">📤 導出數據 (JSON備份)</button><button onclick="importDataFromFile()" class="bg-stone-700 py-2 rounded-xl text-xs w-full">📥 導入數據 (恢復備份)</button></div>
         <div class="flex gap-2 mt-2"><button onclick="syncCurrentDataToCloud()" class="bg-red-700 py-2 rounded-xl text-xs w-full">☁️ 強制同步到雲端</button></div></div>
         
@@ -96,7 +96,7 @@
         <!-- 賽事榮耀管理 -->
         <div class="bg-stone-900 rounded-2xl p-5 space-y-4">
             <div class="flex justify-between items-center"><h3 class="font-black text-lg">🏆 賽事榮耀戰績榜管理</h3><div><button onclick="openRaceForm()" class="bg-red-600 px-3 py-1 rounded-xl text-xs">+ 新增賽事</button><button onclick="importRaceFromExcel()" class="bg-stone-700 ml-2 px-3 py-1 rounded-xl text-xs">📂 從 Excel 導入賽事</button><button onclick="openRaceSheetImport()" class="bg-stone-700 ml-2 px-3 py-1 rounded-xl text-xs">📎 從 Google Sheet 匯入</button></div></div>
-            <div class="overflow-x-auto"><table class="w-full text-xs"><thead><tr class="text-stone-400"><th>年份</th><th>賽事名稱</th><th>距離</th><th>時間</th><th>獎項</th><th>操作</th> </tr></thead><tbody id="admin-race-table"></tbody>}</div>
+            <div class="overflow-x-auto"><table class="w-full text-xs"><thead><tr class="text-stone-400"><th>年份</th><th>賽事名稱</th><th>距離</th><th>時間</th><th>獎項</th><th>操作</th></tr></thead><tbody id="admin-race-table"></tbody></table></div>
             <button onclick="resetDefaultRaces()" class="mt-2 w-full border border-dashed border-stone-600 py-2 rounded-xl text-xs text-stone-400">📋 重置為完整預設戰績</button>
         </div>
     </div>
@@ -381,12 +381,12 @@
     document.getElementById('balance-tip').innerHTML = Math.abs(left-right)<=5 ? '⚖️ 平衡' : (left>right ? '⚠️ 左舷重' : '⚠️ 右舷重');
   }
 
-  // 管理員相關函數（因篇幅僅列出必要，實際完整實現請參考完整版本）
+  // 管理員相關函數
   function openAdminLogin(){ document.getElementById('admin-login-modal').classList.remove('hidden'); }
   function closeAdminModal(){ document.getElementById('admin-login-modal').classList.add('hidden'); }
   function checkAdminLogin(){ let pwd=document.getElementById('admin-pwd').value; if(pwd==='dragon2026'){ closeAdminModal(); document.getElementById('admin-panel').classList.remove('hidden'); renderAdminMemberTable(); renderAdminPracticeList(); renderAdminRaceTable(); document.getElementById('admin-next-race-name').value=nextRace.name; document.getElementById('admin-next-race-date').value=nextRace.date; } else alert('密碼錯誤'); }
   function closeAdminPanel(){ document.getElementById('admin-panel').classList.add('hidden'); }
-  function switchMainTab(tab){ ['home','roster','tactics','records','rank'].forEach(t=>document.getElementById(`${t}-section`).classList.add('hidden')); document.getElementById(`${tab}-section`).classList.remove('hidden'); if(tab==='tactics') renderTacticsUI(); if(tab==='records') renderRaceTable(); if(tab==='home') renderHome(); }window.switchMainTab = switchMainTab;
+  function switchMainTab(tab){ ['home','roster','tactics','records','rank'].forEach(t=>document.getElementById(`${t}-section`).classList.add('hidden')); document.getElementById(`${tab}-section`).classList.remove('hidden'); if(tab==='tactics') renderTacticsUI(); if(tab==='records') renderRaceTable(); if(tab==='home') renderHome(); }
   async function updateNextRace(){ let name=document.getElementById('admin-next-race-name').value, date=document.getElementById('admin-next-race-date').value; if(name) nextRace.name=name; if(date) nextRace.date=date; await saveAll(); renderHome(); alert('已更新'); }
   function exportDataToFile(){ const data={members,practices,raceRecords,nextRace}; const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`crazy18_backup_${new Date().toISOString().slice(0,19)}.json`; a.click(); URL.revokeObjectURL(a.href); alert('已導出'); }
   async function importDataFromFile(){ const input=document.createElement('input'); input.type='file'; input.accept='application/json'; input.onchange=async(e)=>{ const file=e.target.files[0]; if(!file) return; const text=await file.text(); const data=JSON.parse(text); if(data.members && data.practices && data.raceRecords && data.nextRace){ members=data.members; practices=data.practices; raceRecords=data.raceRecords; nextRace=data.nextRace; assignMemberCodes(); practices=practices.map(p=>({...p, date:normalizeDate(p.date)||p.date})); await saveAll(); renderAll(); alert('導入成功'); } else alert('無效備份'); }; input.click(); }
@@ -418,6 +418,20 @@
   async function saveRaceFromAdmin(){ let id=document.getElementById('edit-race-id').value; let year=parseInt(document.getElementById('race-year').value); let event=document.getElementById('race-event').value; let distance=document.getElementById('race-distance').value; let time=document.getElementById('race-time').value; let award=document.getElementById('race-award').value; if(!year||!event||!distance||!award) return; if(id){ let idx=raceRecords.findIndex(r=>r.id===id); if(idx!==-1) raceRecords[idx]={...raceRecords[idx], year, event, distance, time, award}; } else raceRecords.push({id:'r_'+Date.now(), year, event, distance, time, award}); await saveAll(); closeRaceForm(); renderAll(); }
   function openRaceSheetImport(){ alert('建議使用Excel導入'); }
   function renderAll(){ renderRoster(); renderRanking(); renderRaceTable(); renderHome(); renderTacticsUI(); renderAdminMemberTable(); renderAdminPracticeList(); renderAdminRaceTable(); }
+
+  // ========== 關鍵修正：將所有 onclick 會用到的函數掛載到 window ==========
+  Object.assign(window, {
+    switchMainTab, setBoatType, autoBalanceByAI, clearAllSeats, setRankBy,
+    closeAdminModal, checkAdminLogin, closeAdminPanel, openMemberForm,
+    openSheetImport, openFullExcelImport, exportDataToFile, importDataFromFile,
+    syncCurrentDataToCloud, openManualPracticeAdmin, openPracticeSheetImport,
+    openRaceForm, importRaceFromExcel, openRaceSheetImport, resetDefaultRaces,
+    editMemberById, deleteMemberById, closeMemberForm, saveMemberFromAdmin,
+    openEditPractice, deletePracticeById, saveEditedPractice, closeEditPracticeModal,
+    saveManualPracticeFromAdmin, closePracticeModal, editRaceById, deleteRaceById,
+    closeRaceForm, saveRaceFromAdmin, selectMemberForBoat, tryPlaceSeat,
+    updateNextRace, openAdminLogin
+  });
 
   // 啟動
   (async () => {
