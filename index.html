@@ -81,11 +81,11 @@
         <div class="bg-stone-900 rounded-2xl p-5 border border-red-900/30"><h3 class="font-black text-lg">⏳ 下一場比賽倒數設定</h3><div class="grid grid-cols-2 gap-3 mt-3"><input type="text" id="admin-next-race-name" placeholder="賽事名稱 (ex: 2026香港龍舟錦標賽)" class="p-2 bg-stone-950 rounded-lg col-span-2"><input type="date" id="admin-next-race-date" class="p-2 bg-stone-950 rounded-lg"><button onclick="updateNextRace()" class="bg-red-600 px-4 py-2 rounded-xl text-sm">儲存倒數目標</button></div></div>
         
         <!-- 隊員資料庫 (顯示編號) -->
-        <div class="bg-stone-900 rounded-2xl p-5"><div class="flex justify-between"><h3 class="font-black text-lg">📋 隊員資料庫 (編號僅管理顯示)</h3><button onclick="openMemberForm()" class="bg-red-600 px-3 py-1 rounded-xl text-xs">+ 新增隊員</button></div><div class="overflow-x-auto mt-3"><table class="w-full text-xs"><thead><tr class="text-stone-400"><th>編號</th><th>頭像</th><th>姓名</th><th>主崗位</th><th>副崗位</th><th>體重</th><th>操作</th> </tr></thead><tbody id="admin-member-table"></tbody></table></div><div class="flex gap-2 mt-4"><button onclick="openSheetImport()" class="border border-dashed border-stone-600 py-2 rounded-xl text-xs text-stone-400 w-full">📎 從Google Sheet CSV匯入隊員</button><button onclick="openFullExcelImport()" class="bg-stone-700 py-2 rounded-xl text-xs w-full">📂 匯入Excel (完整覆蓋隊員+操練)</button></div></div>
+        <div class="bg-stone-900 rounded-2xl p-5"><div class="flex justify-between"><h3 class="font-black text-lg">📋 隊員資料庫 (編號僅管理顯示)</h3><button onclick="openMemberForm()" class="bg-red-600 px-3 py-1 rounded-xl text-xs">+ 新增隊員</button></div><div class="overflow-x-auto mt-3"><table class="w-full text-xs"><thead><tr class="text-stone-400"><th>編號</th><th>頭像</th><th>姓名</th><th>主崗位</th><th>副崗位</th><th>體重</th><th>操作</th> <tr></thead><tbody id="admin-member-table"></tbody></table></div><div class="flex gap-2 mt-4"><button onclick="openSheetImport()" class="border border-dashed border-stone-600 py-2 rounded-xl text-xs text-stone-400 w-full">📎 從Google Sheet CSV匯入隊員</button><button onclick="openFullExcelImport()" class="bg-stone-700 py-2 rounded-xl text-xs w-full">📂 匯入Excel (完整覆蓋隊員+操練)</button></div>
         <div class="flex gap-2 mt-3">
-    <button onclick="exportDataToFile()" class="bg-stone-800 py-2 rounded-xl text-xs w-full border border-stone-600">📤 導出數據 (JSON備份)</button>
-    <button onclick="importDataFromFile()" class="bg-stone-700 py-2 rounded-xl text-xs w-full">📥 導入數據 (恢復備份)</button>
-</div>
+            <button onclick="exportDataToFile()" class="bg-stone-800 py-2 rounded-xl text-xs w-full border border-stone-600">📤 導出數據 (JSON備份)</button>
+            <button onclick="importDataFromFile()" class="bg-stone-700 py-2 rounded-xl text-xs w-full">📥 導入數據 (恢復備份)</button>
+        </div></div>
         
         <!-- 操練管理（可修改每則記錄） -->
         <div class="bg-stone-900 rounded-2xl p-5 space-y-4"><h3 class="font-black text-lg">🚣 操練紀錄管理</h3>
@@ -107,7 +107,7 @@
                     <button onclick="openRaceSheetImport()" class="bg-stone-700 ml-2 px-3 py-1 rounded-xl text-xs">📎 從 Google Sheet 匯入</button>
                 </div>
             </div>
-            <div class="overflow-x-auto"><table class="w-full text-xs"><thead><tr class="text-stone-400"><th>年份</th><th>賽事名稱</th><th>距離</th><th>時間</th><th>獎項</th><th>操作</th></tr></thead><tbody id="admin-race-table"></tbody></table></div>
+            <div class="overflow-x-auto"><table class="w-full text-xs"><thead><tr class="text-stone-400"><th>年份</th><th>賽事名稱</th><th>距離</th><th>時間</th><th>獎項</th><th>操作</th> </tr></thead><tbody id="admin-race-table"></tbody> </table></div>
             <button onclick="resetDefaultRaces()" class="mt-2 w-full border border-dashed border-stone-600 py-2 rounded-xl text-xs text-stone-400">📋 重置為完整預設戰績</button>
         </div>
     </div>
@@ -126,12 +126,90 @@
     // ------------------- 全域 -------------------
     let members = []; let practices = []; let raceRecords = []; let currentRankBy = 'times';
     let boatType = 'small'; let currentBoatSetup = {}; let selectedMemberForSeat = null;
-    let nextRace = { name: "2026香港童軍龍舟錦標賽", date: "2026-10-10" };
+    let nextRace = { name: "2026香港童軍龍舟錦標賽地域/署邀請賽", date: "2026-10-10" };
     
-    // 完整賽事預設
-    const fullRaceData = [{ id:"r1", year:2024, event:"大埔區龍舟競賽 - 新界東童軍地域邀請賽", distance:"約300m", time:"2分16秒", award:"冠軍" },{ id:"r2", year:2024, event:"「童」挑戰-玩轉海、陸、空海上活動比賽 - 龍舟速度賽", distance:"200m", time:"--", award:"冠軍" },{ id:"r3", year:2022, event:"香港童軍110周年賽船大會龍舟 - 公開組", distance:"300m", time:"--", award:"冠軍" },{ id:"r4", year:2019, event:"大埔區龍舟競賽 - 新界東童軍地域邀請賽", distance:"300m", time:"2分30秒", award:"冠軍" },{ id:"r5", year:2016, event:"大埔區龍舟競賽 - 新界東童軍地域邀請賽", distance:"300m", time:"2分28秒", award:"冠軍" },{ id:"r6", year:2015, event:"大埔區龍舟競賽 - 新界東童軍地域邀請賽", distance:"300m", time:"2分20秒", award:"冠軍" },{ id:"r7", year:2014, event:"大埔區龍舟競賽 - 新界東童軍地域邀請賽", distance:"300m", time:"2分35秒", award:"冠軍" },{ id:"r8", year:2013, event:"大埔區龍舟競賽 - 新界東童軍地域邀請賽", distance:"300m", time:"--", award:"亞軍" },{ id:"r9", year:2011, event:"大埔區龍舟競賽 - 香港童軍100周年龍舟邀請賽", distance:"300m", time:"--", award:"冠軍" }];
-    
-    // 日期轉換函數 (全局)
+    // ==================== 內置完整預設數據 ====================
+    // 1. 隊員 (22人，基於 Teammate 工作表)
+    const defaultMembers = [
+        { id: "m1", name: "Miss", primaryRole: "右划手", secondaryRole: "鼓手", weight: 50, avatar: "👩‍🏫", code: "C01" },
+        { id: "m2", name: "大保", primaryRole: "右划手", secondaryRole: "舵手", weight: 75, avatar: "🦸‍♂️", code: "C02" },
+        { id: "m3", name: "神", primaryRole: "左划手", secondaryRole: "無", weight: 80, avatar: "⚡", code: "C03" },
+        { id: "m4", name: "明", primaryRole: "右划手", secondaryRole: "無", weight: 65, avatar: "💡", code: "C04" },
+        { id: "m5", name: "發", primaryRole: "左划手", secondaryRole: "無", weight: 65, avatar: "🍀", code: "C05" },
+        { id: "m6", name: "威", primaryRole: "右划手", secondaryRole: "無", weight: 70, avatar: "🦁", code: "C06" },
+        { id: "m7", name: "偉", primaryRole: "右划手", secondaryRole: "無", weight: 90, avatar: "👑", code: "C07" },
+        { id: "m8", name: "So", primaryRole: "左划手", secondaryRole: "無", weight: 85, avatar: "😎", code: "C08" },
+        { id: "m9", name: "Pinky", primaryRole: "左划手", secondaryRole: "無", weight: 50, avatar: "🌸", code: "C09" },
+        { id: "m10", name: "傑", primaryRole: "左划手", secondaryRole: "無", weight: 75, avatar: "🏆", code: "C10" },
+        { id: "m11", name: "康", primaryRole: "右划手", secondaryRole: "左划手", weight: 65, avatar: "🧘", code: "C11" },
+        { id: "m12", name: "業", primaryRole: "左划手", secondaryRole: "無", weight: 70, avatar: "💼", code: "C12" },
+        { id: "m13", name: "彥", primaryRole: "右划手", secondaryRole: "無", weight: 90, avatar: "⚓", code: "C13" },
+        { id: "m14", name: "車", primaryRole: "鼓手", secondaryRole: "右划手", weight: 40, avatar: "🏎️", code: "C14" },
+        { id: "m15", name: "國文", primaryRole: "左划手", secondaryRole: "舵手", weight: 70, avatar: "📚", code: "C15" },
+        { id: "m16", name: "昕", primaryRole: "右划手", secondaryRole: "無", weight: 60, avatar: "🌅", code: "C16" },
+        { id: "m17", name: "全", primaryRole: "左划手", secondaryRole: "無", weight: 75, avatar: "🎯", code: "C17" },
+        { id: "m18", name: "聰", primaryRole: "左划手", secondaryRole: "無", weight: 65, avatar: "🧠", code: "C18" },
+        { id: "m19", name: "Anson", primaryRole: "右划手", secondaryRole: "無", weight: 85, avatar: "🏃", code: "C19" },
+        { id: "m20", name: "Joyce", primaryRole: "右划手", secondaryRole: "無", weight: 60, avatar: "🌼", code: "C20" },
+        { id: "m21", name: "忌廉", primaryRole: "右划手", secondaryRole: "無", weight: 50, avatar: "🍦", code: "C21" },
+        { id: "m22", name: "Lik", primaryRole: "右划手", secondaryRole: "無", weight: 65, avatar: "🏆", code: "C22" }
+    ];
+
+    // 2. 完整賽事 (25筆，基於 Race 工作表)
+    const fullRaceData = [
+        { id: "r1", year: 2026, event: "2026香港童軍龍舟錦標賽地域/署邀請賽", distance: "200m", time: "51秒", award: "冠軍" },
+        { id: "r2", year: 2025, event: "2025觀塘海濱陽光龍舟賽", distance: "200m", time: "56.82秒", award: "銀盃亞軍" },
+        { id: "r3", year: 2025, event: "大埔區龍舟競賽 - 新界東童軍地域邀請賽", distance: "500m", time: "", award: "冠軍" },
+        { id: "r4", year: 2024, event: "2024觀塘海濱陽光龍舟賽", distance: "250m", time: "1分11秒", award: "金碟殿軍" },
+        { id: "r5", year: 2024, event: "大埔區龍舟競賽 - 新界東童軍地域邀請賽", distance: "500m", time: "2分16秒", award: "冠軍" },
+        { id: "r6", year: 2024, event: "「童」挑戰-玩轉海、陸、空海上活動比賽 - 龍舟速度賽", distance: "200m", time: "--", award: "冠軍" },
+        { id: "r7", year: 2024, event: "「童」挑戰-玩轉海、陸、空海上活動比賽 - 外界邀請賽", distance: "200m", time: "--", award: "亞軍" },
+        { id: "r8", year: 2022, event: "香港童軍110周年賽船大會龍舟 - 公開組", distance: "300m", time: "--", award: "冠軍" },
+        { id: "r9", year: 2022, event: "香港童軍110周年賽船大會龍舟 - 邀請賽", distance: "300m", time: "--", award: "亞軍" },
+        { id: "r10", year: 2019, event: "大埔區龍舟競賽 - 新界東童軍地域邀請賽", distance: "500m", time: "2分30秒", award: "冠軍" },
+        { id: "r11", year: 2019, event: "大埔區龍舟競賽 - 青年組", distance: "500m", time: "2分27秒", award: "冠軍" },
+        { id: "r12", year: 2018, event: "大埔區龍舟競賽 - 新界東童軍地域邀請賽", distance: "500m", time: "--", award: "冠軍" },
+        { id: "r13", year: 2016, event: "大埔區龍舟競賽 - 新界東童軍地域邀請賽", distance: "500m", time: "2分28秒", award: "冠軍" },
+        { id: "r14", year: 2016, event: "大埔區龍舟競賽 - 青年組", distance: "500m", time: "2分33秒", award: "季軍" },
+        { id: "r15", year: 2015, event: "大埔區龍舟競賽 - 新界東童軍地域邀請賽", distance: "500m", time: "2分20秒", award: "冠軍" },
+        { id: "r16", year: 2015, event: "第二屆香港童軍龍舟邀請賽 - 曾務委員組", distance: "300m", time: "--", award: "冠軍" },
+        { id: "r17", year: 2015, event: "第二屆香港童軍龍舟邀請賽 - 領袖組", distance: "300m", time: "--", award: "亞軍" },
+        { id: "r18", year: 2014, event: "大埔區龍舟競賽 - 新界東童軍地域邀請賽", distance: "500m", time: "2分35秒", award: "冠軍" },
+        { id: "r19", year: 2014, event: "第二屆香港童軍龍舟邀請賽 - 公開組", distance: "300m", time: "1分23秒", award: "冠軍" },
+        { id: "r20", year: 2013, event: "大埔區龍舟競賽 - 新界東童軍地域邀請賽", distance: "500m", time: "--", award: "亞軍" },
+        { id: "r21", year: 2013, event: "第一屆香港童軍龍舟邀請賽 - 會務委員組", distance: "300m", time: "--", award: "冠軍" },
+        { id: "r22", year: 2013, event: "第一屆香港童軍龍舟邀請賽 - 曾務委員組", distance: "300m", time: "--", award: "亞軍" },
+        { id: "r23", year: 2012, event: "大埔區龍舟競賽 - 新界東童軍地域邀請賽", distance: "500m", time: "--", award: "取消資格" },
+        { id: "r24", year: 2011, event: "大埔區龍舟競賽 - 香港童軍100周年龍舟邀請賽", distance: "500m", time: "--", award: "冠軍" },
+        { id: "r25", year: 2010, event: "大埔區龍舟競賽 - 新界東童軍十周年龍舟邀請賽", distance: "500m", time: "--", award: "冠軍" }
+    ];
+
+    // 3. 操練記錄 (20筆，基於 Training 工作表，使用編號)
+    const defaultPracticesRaw = [
+        { date: "2026-05-28", distance: 5.5, hours: 1.5, codes: ["C03","C04","C05","C06","C17","C15","C09","C02","C13"] },
+        { date: "2026-05-26", distance: 5.2, hours: 1, codes: ["C03","C15","C09","C22","C01"] },
+        { date: "2026-05-24", distance: 8.8, hours: 2, codes: ["C03","C04","C06","C18","C01","C10","C21","C07","C13","C09"] },
+        { date: "2026-05-18", distance: 5.3, hours: 1, codes: ["C03","C04","C05","C06","C09","C01","C15","C16","C13","C02"] },
+        { date: "2026-05-14", distance: 6, hours: 1, codes: ["C03","C04","C05","C06","C20","C18","C10","C07","C01","C16","C08","C02"] },
+        { date: "2026-05-11", distance: 6, hours: 1.5, codes: ["C04","C05","C06","C18","C01","C16","C15","C09","C02","C13"] },
+        { date: "2026-05-07", distance: 5.1, hours: 1, codes: ["C03","C04","C05","C06","C20","C01","C16","C07","C14"] },
+        { date: "2026-05-04", distance: 6, hours: 1, codes: ["C03","C04","C05","C06","C08","C15","C07","C09","C13"] },
+        { date: "2026-04-30", distance: 10, hours: 1.5, codes: ["C03","C04","C05","C06","C08","C15","C01","C07","C14","C02","C09","C19"] },
+        { date: "2026-04-16", distance: 9.6, hours: 1.5, codes: ["C03","C04","C05","C06","C15","C20","C01","C09","C02","C13","C16"] },
+        { date: "2026-04-13", distance: 10.2, hours: 1.5, codes: ["C03","C04","C05","C06","C14","C07","C01","C15","C08","C02","C09"] },
+        { date: "2026-04-09", distance: 9.5, hours: 1.5, codes: ["C03","C04","C05","C06","C15","C07","C01","C13"] },
+        { date: "2026-04-07", distance: 10.1, hours: 2.5, codes: ["C03","C04","C05","C06","C01","C20","C19","C13"] },
+        { date: "2026-04-02", distance: 8, hours: 1.5, codes: ["C03","C04","C05","C06","C07","C15","C01","C08","C13"] },
+        { date: "2026-03-30", distance: 8, hours: 1.5, codes: ["C03","C06","C01","C15","C17","C19"] },
+        { date: "2026-03-26", distance: 8, hours: 1.5, codes: ["C03","C04","C05","C15","C01","C06","C09","C07","C10","C02","C13"] },
+        { date: "2026-03-23", distance: 8, hours: 1.5, codes: ["C03","C04","C05","C06","C17","C01","C15","C09","C16","C13"] },
+        { date: "2026-03-12", distance: 8, hours: 1.5, codes: ["C03","C04","C05","C02","C09","C13","C08"] },
+        { date: "2026-03-05", distance: 8, hours: 1.5, codes: ["C03","C08","C06","C20","C07","C01","C02","C09","C15"] },
+        { date: "2026-03-03", distance: 8, hours: 1.5, codes: ["C03","C08","C06","C10","C09","C19","C02"] }
+    ];
+    // =====================================================
+
+    // 日期轉換函數
     function excelDateToJSDate(serial) {
         if (typeof serial !== 'number') return serial;
         const utc_days = Math.floor(serial - 25569);
@@ -154,99 +232,126 @@
         return raw;
     }
 
-    // 初始化編號工具
-    function assignMemberCodes() { let idx=1; members.forEach(m => { if(!m.code) m.code = `C${String(idx++).padStart(2,'0')}`; else { let oldNum = parseInt(m.code.substring(1)); if(isNaN(oldNum)) m.code = `C${String(idx++).padStart(2,'0')}`; else idx = Math.max(idx, oldNum+1); } }); members.sort((a,b)=> a.code.localeCompare(b.code)); let nextNum=1; for(let m of members) { m.code = `C${String(nextNum++).padStart(2,'0')}`; } }
-    
+    // 初始化編號工具（確保編號順序）
+    function assignMemberCodes() { 
+        let idx=1; 
+        members.forEach(m => { 
+            if(!m.code) m.code = `C${String(idx++).padStart(2,'0')}`; 
+            else { 
+                let oldNum = parseInt(m.code.substring(1)); 
+                if(isNaN(oldNum)) m.code = `C${String(idx++).padStart(2,'0')}`; 
+                else idx = Math.max(idx, oldNum+1); 
+            } 
+        }); 
+        members.sort((a,b)=> a.code.localeCompare(b.code)); 
+        let nextNum=1; 
+        for(let m of members) { 
+            m.code = `C${String(nextNum++).padStart(2,'0')}`; 
+        } 
+    }
+
+    // 載入數據（若無現有數據則使用內置默認）
     function loadData() {
         let stored = localStorage.getItem('dragon_members_v2');
-        if(stored) members = JSON.parse(stored); else members = [{ id:"m1", name:"大豪", primaryRole:"左槳手", secondaryRole:"右槳手", weight:88, avatar:"💪", cheers:0 },{ id:"m2", name:"小敏", primaryRole:"左槳手", secondaryRole:"無", weight:52, avatar:"👩‍🌾", cheers:0 }];
-        assignMemberCodes();
-        let prac = localStorage.getItem('dragon_practices_v2');
-        practices = prac ? JSON.parse(prac) : [];
-        // 標準化所有練習日期
-        practices = practices.map(p => ({ ...p, date: normalizeDate(p.date) || p.date }));
-        let race = localStorage.getItem('dragon_race_records_v2');
-        raceRecords = race ? JSON.parse(race) : JSON.parse(JSON.stringify(fullRaceData));
-        let nr = localStorage.getItem('dragon_next_race');
-        if(nr) nextRace = JSON.parse(nr);
-        saveAll();
-        // 導出所有數據為 JSON 文件
-function exportDataToFile() {
-    const exportData = {
-        members: members,
-        practices: practices,
-        raceRecords: raceRecords,
-        nextRace: nextRace,
-        version: '1.0'
-    };
-    const jsonStr = JSON.stringify(exportData, null, 2);
-    const blob = new Blob([jsonStr], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `crazy18_backup_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    alert('數據已導出，請保存好 JSON 文件');
-}
-
-// 從 JSON 文件導入數據並覆蓋
-function importDataFromFile() {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'application/json';
-    input.onchange = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const text = await file.text();
-        try {
-            const data = JSON.parse(text);
-            // 驗證數據結構
-            if (data.members && data.practices && data.raceRecords && data.nextRace) {
-                members = data.members;
-                practices = data.practices;
-                raceRecords = data.raceRecords;
-                nextRace = data.nextRace;
-                // 重新分配編號並標準化日期
-                assignMemberCodes();
-                practices = practices.map(p => ({ ...p, date: normalizeDate(p.date) || p.date }));
-                saveAll();
-                // 刷新所有界面
-                renderAdminMemberTable();
-                renderAdminPracticeList();
-                renderAdminRaceTable();
-                renderRoster();
-                renderRanking();
-                renderRaceTable();
-                renderHome();
-                renderTacticsUI();
-                alert('數據導入成功！頁面已更新。');
-            } else {
-                alert('無效的備份文件：缺少必要欄位');
-            }
-        } catch (err) {
-            alert('解析失敗：文件格式錯誤');
-            console.error(err);
+        if (stored) {
+            members = JSON.parse(stored);
+            practices = JSON.parse(localStorage.getItem('dragon_practices_v2')) || [];
+            raceRecords = JSON.parse(localStorage.getItem('dragon_race_records_v2')) || [];
+            let nr = localStorage.getItem('dragon_next_race');
+            if (nr) nextRace = JSON.parse(nr);
+            assignMemberCodes();
+            practices = practices.map(p => ({ ...p, date: normalizeDate(p.date) || p.date }));
+        } else {
+            // 首次加載：使用內置默認數據
+            members = JSON.parse(JSON.stringify(defaultMembers));
+            assignMemberCodes(); // 確保編號
+            // 建立 code -> id 映射
+            const codeToId = {};
+            members.forEach(m => { codeToId[m.code] = m.id; });
+            // 生成操練記錄，將編號轉為 id
+            practices = defaultPracticesRaw.map((p, idx) => ({
+                id: 'p_def_' + idx,
+                date: p.date,
+                distance: p.distance,
+                hours: p.hours,
+                attendees: p.codes.map(code => codeToId[code]).filter(id => id)
+            }));
+            raceRecords = JSON.parse(JSON.stringify(fullRaceData));
+            nextRace = { name: "2026香港童軍龍舟錦標賽地域/署邀請賽", date: "2026-10-10" };
         }
-    };
-    input.click();
-}
+        saveAll();
     }
-    function saveAll() { localStorage.setItem('dragon_members_v2', JSON.stringify(members)); localStorage.setItem('dragon_practices_v2', JSON.stringify(practices)); localStorage.setItem('dragon_race_records_v2', JSON.stringify(raceRecords)); localStorage.setItem('dragon_next_race', JSON.stringify(nextRace)); }
-    
+
+    function saveAll() { 
+        localStorage.setItem('dragon_members_v2', JSON.stringify(members)); 
+        localStorage.setItem('dragon_practices_v2', JSON.stringify(practices)); 
+        localStorage.setItem('dragon_race_records_v2', JSON.stringify(raceRecords)); 
+        localStorage.setItem('dragon_next_race', JSON.stringify(nextRace)); 
+    }
+
+    // 導出數據為 JSON 檔案
+    function exportDataToFile() {
+        const exportData = { members, practices, raceRecords, nextRace, version: '1.0' };
+        const jsonStr = JSON.stringify(exportData, null, 2);
+        const blob = new Blob([jsonStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `crazy18_backup_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        alert('數據已導出，請保存好 JSON 文件');
+    }
+
+    // 從 JSON 檔案導入數據
+    function importDataFromFile() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'application/json';
+        input.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const text = await file.text();
+            try {
+                const data = JSON.parse(text);
+                if (data.members && data.practices && data.raceRecords && data.nextRace) {
+                    members = data.members;
+                    practices = data.practices;
+                    raceRecords = data.raceRecords;
+                    nextRace = data.nextRace;
+                    assignMemberCodes();
+                    practices = practices.map(p => ({ ...p, date: normalizeDate(p.date) || p.date }));
+                    saveAll();
+                    renderAdminMemberTable();
+                    renderAdminPracticeList();
+                    renderAdminRaceTable();
+                    renderRoster();
+                    renderRanking();
+                    renderRaceTable();
+                    renderHome();
+                    renderTacticsUI();
+                    alert('數據導入成功！頁面已更新。');
+                } else {
+                    alert('無效的備份文件：缺少必要欄位');
+                }
+            } catch (err) {
+                alert('解析失敗：文件格式錯誤');
+                console.error(err);
+            }
+        };
+        input.click();
+    }
+
     // 首頁渲染 (最新十次，顯示隊員姓名)
     function renderHome() {
-        // 按日期倒序取前10條
         let sorted = [...practices].sort((a,b)=> new Date(b.date) - new Date(a.date)).slice(0,10);
         let container = document.getElementById('latest-practices-list');
         if(container) {
-            // 建立 id -> 姓名 對照表
             const nameMap = new Map();
             members.forEach(m => nameMap.set(m.id, m.name));
             container.innerHTML = sorted.map(p => {
-                // 將出席隊員 id 轉為姓名列表
                 let attendeesNames = p.attendees.map(id => nameMap.get(id) || id).join('、');
                 return `<div class="bg-stone-800/70 p-3 rounded-xl">
                             <div class="flex justify-between items-center">
@@ -263,10 +368,18 @@ function importDataFromFile() {
         document.getElementById('next-race-name').innerText = nextRace.name;
         document.getElementById('next-race-date').innerText = nextRace.date ? `🗓️ ${nextRace.date}` : '';
     }
-    
-    function updateNextRace() { let name=document.getElementById('admin-next-race-name').value; let date=document.getElementById('admin-next-race-date').value; if(name) nextRace.name=name; if(date) nextRace.date=date; saveAll(); renderHome(); alert('倒數目標已更新'); }
-    
-    // 排行（已修正排序及高亮）
+
+    function updateNextRace() { 
+        let name = document.getElementById('admin-next-race-name').value; 
+        let date = document.getElementById('admin-next-race-date').value; 
+        if(name) nextRace.name = name; 
+        if(date) nextRace.date = date; 
+        saveAll(); 
+        renderHome(); 
+        alert('倒數目標已更新'); 
+    }
+
+    // 操練排行
     function renderRanking() { 
         let stats = members.map(m => {
             let t = 0, d = 0, h = 0;
@@ -304,13 +417,12 @@ function importDataFromFile() {
     function setRankBy(by){
         currentRankBy = by;
         renderRanking();
-        // 更新按钮高亮
         document.getElementById('rank-times-btn').className = 'px-3 py-1 rounded-lg text-xs ' + (by === 'times' ? 'bg-red-600 text-white' : 'text-stone-400');
         document.getElementById('rank-dist-btn').className = 'px-3 py-1 rounded-lg text-xs ' + (by === 'distance' ? 'bg-red-600 text-white' : 'text-stone-400');
         document.getElementById('rank-hours-btn').className = 'px-3 py-1 rounded-lg text-xs ' + (by === 'hours' ? 'bg-red-600 text-white' : 'text-stone-400');
     }
     
-    // 隊員名冊 (修正年度次數)
+    // 隊員名冊
     function renderRoster() { 
         let currentYear = new Date().getFullYear();
         let html = members.map(m => {
@@ -334,72 +446,184 @@ function importDataFromFile() {
         document.getElementById('member-roster-grid').innerHTML = html; 
     }
     
-    function renderRaceTable(){ let sorted=[...raceRecords].sort((a,b)=>b.year-a.year); document.getElementById('race-table-body').innerHTML=sorted.map(r=>`<tr class="border-b"><td class="p-2">${r.year}</td><td>${r.event}</td><td>${r.distance}</td><td>${r.time}</td><td class="text-red-400">${r.award}</td></tr>`).join(''); }
+    function renderRaceTable(){ 
+        let sorted = [...raceRecords].sort((a,b)=>b.year - a.year); 
+        document.getElementById('race-table-body').innerHTML = sorted.map(r => `<tr class="border-b"><td class="p-2">${r.year}</td><td>${r.event}</td><td>${r.distance}</td><td>${r.time}</td><td class="text-red-400">${r.award}</td></tr>`).join(''); 
+    }
     
     // 管理員隊員表格
-    function renderAdminMemberTable(){ let tbody=document.getElementById('admin-member-table'); tbody.innerHTML=members.map(m=>`<tr><td class="font-mono text-red-300">${m.code}</td><td>${m.avatar}</td><td>${m.name}</td><td>${m.primaryRole}</td><td>${m.secondaryRole}</td><td>${m.weight}</td><td><button onclick="editMemberById('${m.id}')" class="bg-stone-800 px-2 py-0.5 rounded">修改</button> <button onclick="deleteMemberById('${m.id}')" class="text-red-400">刪除</button></td></tr>`).join(''); }
-    function deleteMemberById(id){ if(confirm('刪除隊員會影響出席紀錄')){ members=members.filter(m=>m.id!==id); assignMemberCodes(); saveAll(); renderAdminMemberTable(); renderRoster(); renderRanking(); renderTacticsUI(); } }
-    function editMemberById(id){ let m=members.find(x=>x.id===id); if(m){ document.getElementById('edit-member-id').value=m.id; document.getElementById('member-name').value=m.name; document.getElementById('member-primary').value=m.primaryRole; document.getElementById('member-secondary').value=m.secondaryRole; document.getElementById('member-weight').value=m.weight; document.getElementById('member-avatar').value=m.avatar; document.getElementById('member-form-title').innerText='編輯隊員'; document.getElementById('member-form-modal').classList.remove('hidden'); } }
-    function openMemberForm(){ document.getElementById('edit-member-id').value=''; document.getElementById('member-name').value=''; document.getElementById('member-primary').value='左槳手'; document.getElementById('member-secondary').value='無'; document.getElementById('member-weight').value=''; document.getElementById('member-avatar').value='💪'; document.getElementById('member-form-title').innerText='新增隊員'; document.getElementById('member-form-modal').classList.remove('hidden'); }
+    function renderAdminMemberTable(){ 
+        let tbody = document.getElementById('admin-member-table'); 
+        tbody.innerHTML = members.map(m => `<tr><td class="font-mono text-red-300">${m.code}</td><td>${m.avatar}</td><td>${m.name}</td><td>${m.primaryRole}</td><td>${m.secondaryRole}</td><td>${m.weight}</td><td><button onclick="editMemberById('${m.id}')" class="bg-stone-800 px-2 py-0.5 rounded">修改</button> <button onclick="deleteMemberById('${m.id}')" class="text-red-400">刪除</button></td></tr>`).join(''); 
+    }
+    function deleteMemberById(id){ 
+        if(confirm('刪除隊員會影響出席紀錄')){ 
+            members = members.filter(m=>m.id!==id); 
+            assignMemberCodes(); 
+            saveAll(); 
+            renderAdminMemberTable(); 
+            renderRoster(); 
+            renderRanking(); 
+            renderTacticsUI(); 
+        } 
+    }
+    function editMemberById(id){ 
+        let m = members.find(x=>x.id===id); 
+        if(m){ 
+            document.getElementById('edit-member-id').value = m.id; 
+            document.getElementById('member-name').value = m.name; 
+            document.getElementById('member-primary').value = m.primaryRole; 
+            document.getElementById('member-secondary').value = m.secondaryRole; 
+            document.getElementById('member-weight').value = m.weight; 
+            document.getElementById('member-avatar').value = m.avatar; 
+            document.getElementById('member-form-title').innerText = '編輯隊員'; 
+            document.getElementById('member-form-modal').classList.remove('hidden'); 
+        } 
+    }
+    function openMemberForm(){ 
+        document.getElementById('edit-member-id').value = ''; 
+        document.getElementById('member-name').value = ''; 
+        document.getElementById('member-primary').value = '左槳手'; 
+        document.getElementById('member-secondary').value = '無'; 
+        document.getElementById('member-weight').value = ''; 
+        document.getElementById('member-avatar').value = '💪'; 
+        document.getElementById('member-form-title').innerText = '新增隊員'; 
+        document.getElementById('member-form-modal').classList.remove('hidden'); 
+    }
     function closeMemberForm(){ document.getElementById('member-form-modal').classList.add('hidden');}
-    function saveMemberFromAdmin(){ let id=document.getElementById('edit-member-id').value; let name=document.getElementById('member-name').value; let primary=document.getElementById('member-primary').value; let secondary=document.getElementById('member-secondary').value; let weight=parseInt(document.getElementById('member-weight').value); let avatar=document.getElementById('member-avatar').value; if(!name||!primary||!weight) return; if(id){ let idx=members.findIndex(m=>m.id===id); if(idx!==-1) members[idx]={...members[idx],name,primaryRole:primary,secondaryRole:secondary,weight,avatar}; } else { members.push({id:'m'+Date.now(),name,primaryRole:primary,secondaryRole:secondary,weight,avatar,cheers:0}); assignMemberCodes(); } saveAll(); closeMemberForm(); renderAdminMemberTable(); renderRoster(); renderRanking(); renderTacticsUI(); }
+    function saveMemberFromAdmin(){ 
+        let id = document.getElementById('edit-member-id').value; 
+        let name = document.getElementById('member-name').value; 
+        let primary = document.getElementById('member-primary').value; 
+        let secondary = document.getElementById('member-secondary').value; 
+        let weight = parseInt(document.getElementById('member-weight').value); 
+        let avatar = document.getElementById('member-avatar').value; 
+        if(!name||!primary||!weight) return; 
+        if(id){ 
+            let idx = members.findIndex(m=>m.id===id); 
+            if(idx!==-1) members[idx] = {...members[idx], name, primaryRole:primary, secondaryRole:secondary, weight, avatar}; 
+        } else { 
+            members.push({id:'m'+Date.now(), name, primaryRole:primary, secondaryRole:secondary, weight, avatar, cheers:0}); 
+            assignMemberCodes(); 
+        } 
+        saveAll(); 
+        closeMemberForm(); 
+        renderAdminMemberTable(); 
+        renderRoster(); 
+        renderRanking(); 
+        renderTacticsUI(); 
+    }
     
-    // 操練管理
-    function renderAdminPracticeList(){ let container=document.getElementById('admin-practice-list'); container.innerHTML=practices.slice().reverse().map(p=>`<div class="bg-stone-800 p-2 rounded-lg flex justify-between items-center"><div>${p.date} ${p.distance}km / ${(p.hours).toFixed(1)}h 出席${p.attendees.length}人</div><div><button onclick="openEditPractice('${p.id}')" class="text-blue-400 mr-2 text-xs">✏️編輯</button><button onclick="deletePracticeById('${p.id}')" class="text-red-400 text-xs">刪除</button></div></div>`).join(''); }
-    function deletePracticeById(id){ practices=practices.filter(p=>p.id!==id); saveAll(); renderAdminPracticeList(); renderRoster(); renderRanking(); renderHome(); }
-    function openEditPractice(id){ let prac = practices.find(p=>p.id===id); if(prac){ document.getElementById('edit-practice-id').value = prac.id; document.getElementById('edit-practice-date').value = prac.date; document.getElementById('edit-practice-dist').value = prac.distance; document.getElementById('edit-practice-hours').value = prac.hours; let div=document.getElementById('edit-attendees-list'); div.innerHTML=members.map(m=>`<label class="flex items-center gap-1"><input type="checkbox" value="${m.id}" class="edit-attend-cb" ${prac.attendees.includes(m.id)?'checked':''}> ${m.name} (${m.code})</label>`).join(''); document.getElementById('practice-edit-modal').classList.remove('hidden'); } }
-    function saveEditedPractice(){ let id=document.getElementById('edit-practice-id').value; let date=document.getElementById('edit-practice-date').value; let dist=parseFloat(document.getElementById('edit-practice-dist').value); let hours=parseFloat(document.getElementById('edit-practice-hours').value); let attendees=Array.from(document.querySelectorAll('#edit-attendees-list input:checked')).map(cb=>cb.value); if(!date||isNaN(dist)||isNaN(hours)||attendees.length===0) return; let idx=practices.findIndex(p=>p.id===id); if(idx!==-1) practices[idx]={...practices[idx], date, distance:dist, hours, attendees}; saveAll(); closeEditPracticeModal(); renderAdminPracticeList(); renderRoster(); renderRanking(); renderHome(); }
+    // 操練管理 (保留原有編輯/刪除功能，此處省略重複程式碼，完整版已包含)
+    function renderAdminPracticeList(){ 
+        let container = document.getElementById('admin-practice-list'); 
+        container.innerHTML = practices.slice().reverse().map(p => `<div class="bg-stone-800 p-2 rounded-lg flex justify-between items-center"><div>${p.date} ${p.distance}km / ${(p.hours).toFixed(1)}h 出席${p.attendees.length}人</div><div><button onclick="openEditPractice('${p.id}')" class="text-blue-400 mr-2 text-xs">✏️編輯</button><button onclick="deletePracticeById('${p.id}')" class="text-red-400 text-xs">刪除</button></div></div>`).join(''); 
+    }
+    function deletePracticeById(id){ 
+        practices = practices.filter(p=>p.id!==id); 
+        saveAll(); 
+        renderAdminPracticeList(); 
+        renderRoster(); 
+        renderRanking(); 
+        renderHome(); 
+    }
+    function openEditPractice(id){ 
+        let prac = practices.find(p=>p.id===id); 
+        if(prac){ 
+            document.getElementById('edit-practice-id').value = prac.id; 
+            document.getElementById('edit-practice-date').value = prac.date; 
+            document.getElementById('edit-practice-dist').value = prac.distance; 
+            document.getElementById('edit-practice-hours').value = prac.hours; 
+            let div = document.getElementById('edit-attendees-list'); 
+            div.innerHTML = members.map(m => `<label class="flex items-center gap-1"><input type="checkbox" value="${m.id}" class="edit-attend-cb" ${prac.attendees.includes(m.id)?'checked':''}> ${m.name} (${m.code})</label>`).join(''); 
+            document.getElementById('practice-edit-modal').classList.remove('hidden'); 
+        } 
+    }
+    function saveEditedPractice(){ 
+        let id = document.getElementById('edit-practice-id').value; 
+        let date = document.getElementById('edit-practice-date').value; 
+        let dist = parseFloat(document.getElementById('edit-practice-dist').value); 
+        let hours = parseFloat(document.getElementById('edit-practice-hours').value); 
+        let attendees = Array.from(document.querySelectorAll('#edit-attendees-list input:checked')).map(cb=>cb.value); 
+        if(!date||isNaN(dist)||isNaN(hours)||attendees.length===0) return; 
+        let idx = practices.findIndex(p=>p.id===id); 
+        if(idx!==-1) practices[idx] = {...practices[idx], date, distance:dist, hours, attendees}; 
+        saveAll(); 
+        closeEditPracticeModal(); 
+        renderAdminPracticeList(); 
+        renderRoster(); 
+        renderRanking(); 
+        renderHome(); 
+    }
     function closeEditPracticeModal(){ document.getElementById('practice-edit-modal').classList.add('hidden'); }
-    function openManualPracticeAdmin(){ document.getElementById('practice-manual-modal').classList.remove('hidden'); let div=document.getElementById('manual-attendees-list'); div.innerHTML=members.map(m=>`<label class="flex items-center gap-1"><input type="checkbox" value="${m.id}" class="attend-check"> ${m.name}</label>`).join(''); document.getElementById('manual-date').value=new Date().toISOString().slice(0,10); }
+    function openManualPracticeAdmin(){ 
+        document.getElementById('practice-manual-modal').classList.remove('hidden'); 
+        let div = document.getElementById('manual-attendees-list'); 
+        div.innerHTML = members.map(m => `<label class="flex items-center gap-1"><input type="checkbox" value="${m.id}" class="attend-check"> ${m.name}</label>`).join(''); 
+        document.getElementById('manual-date').value = new Date().toISOString().slice(0,10); 
+    }
     function closePracticeModal(){ document.getElementById('practice-manual-modal').classList.add('hidden');}
-    function saveManualPracticeFromAdmin(){ let date=document.getElementById('manual-date').value; let dist=parseFloat(document.getElementById('manual-distance').value); let hrs=parseFloat(document.getElementById('manual-hours').value); let attendees=Array.from(document.querySelectorAll('#manual-attendees-list input:checked')).map(cb=>cb.value); if(!date||isNaN(dist)||isNaN(hrs)||attendees.length===0) return; practices.push({id:'p'+Date.now(),date,distance:dist,hours:hrs,attendees}); saveAll(); closePracticeModal(); renderAdminPracticeList(); renderRoster(); renderRanking(); renderHome(); }
+    function saveManualPracticeFromAdmin(){ 
+        let date = document.getElementById('manual-date').value; 
+        let dist = parseFloat(document.getElementById('manual-distance').value); 
+        let hrs = parseFloat(document.getElementById('manual-hours').value); 
+        let attendees = Array.from(document.querySelectorAll('#manual-attendees-list input:checked')).map(cb=>cb.value); 
+        if(!date||isNaN(dist)||isNaN(hrs)||attendees.length===0) return; 
+        practices.push({id:'p'+Date.now(), date, distance:dist, hours:hrs, attendees}); 
+        saveAll(); 
+        closePracticeModal(); 
+        renderAdminPracticeList(); 
+        renderRoster(); 
+        renderRanking(); 
+        renderHome(); 
+    }
     
-    // 完整 Excel 匯入 (修正日期轉換)
+    // Excel 匯入功能 (簡化，保留原有)
     function openFullExcelImport() {
-        let input=document.createElement('input'); 
-        input.type='file'; 
-        input.accept='.xlsx, .xls'; 
-        input.onchange=async(e)=>{ 
-            let file=e.target.files[0]; 
-            let data=await file.arrayBuffer(); 
-            let wb=XLSX.read(data); 
-            let memberSheet=wb.Sheets['Teammate']||wb.Sheets[wb.SheetNames[0]]; 
-            let trainingSheet=wb.Sheets['Training']||wb.Sheets[wb.SheetNames[1]]; 
+        let input = document.createElement('input'); 
+        input.type = 'file'; 
+        input.accept = '.xlsx, .xls'; 
+        input.onchange = async(e) => { 
+            let file = e.target.files[0]; 
+            let data = await file.arrayBuffer(); 
+            let wb = XLSX.read(data); 
+            let memberSheet = wb.Sheets['Teammate'] || wb.Sheets[wb.SheetNames[0]]; 
+            let trainingSheet = wb.Sheets['Training'] || wb.Sheets[wb.SheetNames[1]]; 
             if(!memberSheet) return alert('需要隊員工作表(Teammate)'); 
-            let memberRows=XLSX.utils.sheet_to_json(memberSheet); 
-            let newMembers=[]; 
-            memberRows.forEach((row,idx)=>{ 
-                let name=row.姓名||row.name; 
-                let primary=row.主要崗位||row.primaryRole||'左槳手'; 
-                let secondary=row.副崗位||row.secondaryRole||'無'; 
-                let weight=parseInt(row.體重||row.weight); 
-                let avatar=row.頭像||row.avatar||'💪'; 
-                if(name&&weight) newMembers.push({id:'m_imp_'+Date.now()+'_'+idx, name, primaryRole:primary, secondaryRole:secondary, weight, avatar, cheers:0}); 
+            let memberRows = XLSX.utils.sheet_to_json(memberSheet); 
+            let newMembers = []; 
+            memberRows.forEach((row,idx) => { 
+                let name = row.姓名 || row.name; 
+                let primary = row.主要崗位 || row.primaryRole || '左槳手'; 
+                let secondary = row.副崗位 || row.secondaryRole || '無'; 
+                let weight = parseInt(row.體重 || row.weight); 
+                let avatar = row.頭像 || row.avatar || '💪'; 
+                if(name && weight) newMembers.push({id:'m_imp_'+Date.now()+'_'+idx, name, primaryRole:primary, secondaryRole:secondary, weight, avatar, cheers:0}); 
             }); 
             if(newMembers.length===0) return alert('隊員資料無效'); 
-            members=newMembers; 
+            members = newMembers; 
             assignMemberCodes(); 
             if(trainingSheet){ 
-                let trainRows=XLSX.utils.sheet_to_json(trainingSheet); 
-                let newPractices=[]; 
-                trainRows.forEach((row,i)=>{ 
-                    let rawDate = row.日期||row.date;
+                let trainRows = XLSX.utils.sheet_to_json(trainingSheet); 
+                let newPractices = []; 
+                trainRows.forEach((row,i) => { 
+                    let rawDate = row.日期 || row.date;
                     let date = normalizeDate(rawDate);
-                    let dist=parseFloat(row.距離||row.distance); 
-                    let hours=parseFloat(row.時數||row.hours); 
+                    let dist = parseFloat(row.距離 || row.distance); 
+                    let hours = parseFloat(row.時數 || row.hours); 
                     let codeStr = row.編號 || row.attendees || row.轉換後編號 || '';
                     if(date && !isNaN(dist) && !isNaN(hours) && codeStr){ 
-                        let codes=String(codeStr).split(',').map(c=>c.trim()); 
-                        let attendees=[]; 
-                        codes.forEach(c=>{ 
-                            let m=members.find(mem=>mem.code===c); 
+                        let codes = String(codeStr).split(',').map(c=>c.trim()); 
+                        let attendees = []; 
+                        codes.forEach(c => { 
+                            let m = members.find(mem=>mem.code===c); 
                             if(m) attendees.push(m.id); 
                         }); 
                         if(attendees.length) newPractices.push({id:'p_imp_'+Date.now()+'_'+i, date, distance:dist, hours, attendees}); 
                     } 
                 }); 
-                if(newPractices.length) practices=newPractices; else practices=[]; 
-            } else practices=[]; 
+                practices = newPractices.length ? newPractices : []; 
+            } else practices = []; 
             saveAll(); 
             renderAdminMemberTable(); 
             renderAdminPracticeList(); 
@@ -411,11 +635,8 @@ function importDataFromFile() {
         }; 
         input.click(); 
     }
-    
-    function openPracticeSheetImport(){ let url=prompt('貼上 Google Sheet CSV 連結(日期,距離,時數,出席隊員編號或用逗號分隔)'); if(url) fetch(url).then(r=>r.text()).then(csv=>{ alert('暫用功能,建議使用Excel覆蓋'); }).catch(()=>alert('錯誤'));}
-    function openSheetImport(){ let url=prompt('貼上 CSV (姓名,主要崗位,副崗位,體重,頭像)'); if(url) fetch(url).then(r=>r.text()).then(csv=>{ alert('請用Excel匯入完整覆蓋'); }).catch(()=>alert('錯誤'));}
-    
-    // 賽事 Excel 匯入
+    function openPracticeSheetImport(){ alert('請使用「匯入Excel」功能'); }
+    function openSheetImport(){ alert('請使用「匯入Excel」功能'); }
     function importRaceFromExcel() {
         let input = document.createElement('input');
         input.type = 'file';
@@ -445,37 +666,164 @@ function importDataFromFile() {
                 renderRaceTable();
                 alert(`成功匯入 ${newRaces.length} 筆賽事紀錄`);
             } else {
-                alert('無效的賽事資料，請確認欄位名稱 (年份,賽事名稱,距離,時間,獎項)');
+                alert('無效的賽事資料，請確認欄位名稱');
             }
         };
         input.click();
     }
+    function resetDefaultRaces(){ 
+        if(confirm('重置預設賽事')){ 
+            raceRecords = JSON.parse(JSON.stringify(fullRaceData)); 
+            saveAll(); 
+            renderAdminRaceTable(); 
+            renderRaceTable(); 
+        } 
+    }
+    function renderAdminRaceTable(){ 
+        let tbody = document.getElementById('admin-race-table'); 
+        let sorted = [...raceRecords].sort((a,b)=>b.year - a.year); 
+        tbody.innerHTML = sorted.map(r => `<tr><td>${r.year}</td><td>${r.event}</td><td>${r.distance}</td><td>${r.time}</td><td>${r.award}</td><td><button onclick="editRaceById('${r.id}')" class="bg-stone-800 px-2 py-0.5 rounded">修改</button> <button onclick="deleteRaceById('${r.id}')" class="text-red-400">刪除</button></td></tr>`).join(''); 
+    }
+    function editRaceById(id){ 
+        let race = raceRecords.find(r=>r.id===id); 
+        if(race){ 
+            document.getElementById('edit-race-id').value = race.id; 
+            document.getElementById('race-year').value = race.year; 
+            document.getElementById('race-event').value = race.event; 
+            document.getElementById('race-distance').value = race.distance; 
+            document.getElementById('race-time').value = race.time; 
+            document.getElementById('race-award').value = race.award; 
+            document.getElementById('race-form-title').innerText = '編輯賽事'; 
+            document.getElementById('race-form-modal').classList.remove('hidden'); 
+        } 
+    }
+    function deleteRaceById(id){ 
+        if(confirm('刪除賽事')){ 
+            raceRecords = raceRecords.filter(r=>r.id!==id); 
+            saveAll(); 
+            renderAdminRaceTable(); 
+            renderRaceTable(); 
+        } 
+    }
+    function openRaceForm(){ 
+        document.getElementById('edit-race-id').value = ''; 
+        document.getElementById('race-year').value = ''; 
+        document.getElementById('race-event').value = ''; 
+        document.getElementById('race-distance').value = ''; 
+        document.getElementById('race-time').value = ''; 
+        document.getElementById('race-award').value = ''; 
+        document.getElementById('race-form-title').innerText = '新增賽事'; 
+        document.getElementById('race-form-modal').classList.remove('hidden'); 
+    }
+    function closeRaceForm(){ document.getElementById('race-form-modal').classList.add('hidden'); }
+    function saveRaceFromAdmin(){ 
+        let id = document.getElementById('edit-race-id').value; 
+        let year = parseInt(document.getElementById('race-year').value); 
+        let event = document.getElementById('race-event').value; 
+        let distance = document.getElementById('race-distance').value; 
+        let time = document.getElementById('race-time').value; 
+        let award = document.getElementById('race-award').value; 
+        if(!year||!event||!distance||!award) return; 
+        if(id){ 
+            let idx = raceRecords.findIndex(r=>r.id===id); 
+            if(idx!==-1) raceRecords[idx] = {...raceRecords[idx], year, event, distance, time, award}; 
+        } else { 
+            raceRecords.push({id:'r_'+Date.now(), year, event, distance, time, award}); 
+        } 
+        saveAll(); 
+        closeRaceForm(); 
+        renderAdminRaceTable(); 
+        renderRaceTable(); 
+    }
+    function openRaceSheetImport(){ alert('建議使用「從 Excel 導入賽事」功能'); }
     
-    function resetDefaultRaces(){ if(confirm('重置預設賽事')){ raceRecords=JSON.parse(JSON.stringify(fullRaceData)); saveAll(); renderAdminRaceTable(); renderRaceTable(); } }
-    function renderAdminRaceTable(){ let tbody=document.getElementById('admin-race-table'); let sorted=[...raceRecords].sort((a,b)=>b.year-a.year); tbody.innerHTML=sorted.map(r=>`<tr><td>${r.year}</td><td>${r.event}</td><td>${r.distance}</td><td>${r.time}</td><td>${r.award}</td><td><button onclick="editRaceById('${r.id}')" class="bg-stone-800 px-2 py-0.5 rounded">修改</button> <button onclick="deleteRaceById('${r.id}')" class="text-red-400">刪除</button></td></tr>`).join(''); }
-    function editRaceById(id){ let race=raceRecords.find(r=>r.id===id); if(race){ document.getElementById('edit-race-id').value=race.id; document.getElementById('race-year').value=race.year; document.getElementById('race-event').value=race.event; document.getElementById('race-distance').value=race.distance; document.getElementById('race-time').value=race.time; document.getElementById('race-award').value=race.award; document.getElementById('race-form-title').innerText='編輯賽事'; document.getElementById('race-form-modal').classList.remove('hidden'); } }
-    function deleteRaceById(id){ if(confirm('刪除賽事')){ raceRecords=raceRecords.filter(r=>r.id!==id); saveAll(); renderAdminRaceTable(); renderRaceTable(); } }
-    function openRaceForm(){ document.getElementById('edit-race-id').value=''; document.getElementById('race-year').value=''; document.getElementById('race-event').value=''; document.getElementById('race-distance').value=''; document.getElementById('race-time').value=''; document.getElementById('race-award').value=''; document.getElementById('race-form-title').innerText='新增賽事'; document.getElementById('race-form-modal').classList.remove('hidden'); }
-    function closeRaceForm(){ document.getElementById('race-form-modal').classList.add('hidden');}
-    function saveRaceFromAdmin(){ let id=document.getElementById('edit-race-id').value; let year=parseInt(document.getElementById('race-year').value); let event=document.getElementById('race-event').value; let distance=document.getElementById('race-distance').value; let time=document.getElementById('race-time').value; let award=document.getElementById('race-award').value; if(!year||!event||!distance||!award) return; if(id){ let idx=raceRecords.findIndex(r=>r.id===id); if(idx!==-1) raceRecords[idx]={...raceRecords[idx], year, event, distance, time, award}; } else raceRecords.push({id:'r_'+Date.now(), year, event, distance, time, award}); saveAll(); closeRaceForm(); renderAdminRaceTable(); renderRaceTable(); }
-    function openRaceSheetImport(){ let url=prompt('CSV 連結'); if(url) fetch(url).then(r=>r.text()).then(()=>alert('建議使用內建重置')); }
-    
-    // 出賽配重
-    function renderTacticsUI(){ let searchTerm=document.getElementById('tactics-search')?.value.toLowerCase()||''; let seatedIds=Object.values(currentBoatSetup); let available=members.filter(m=>!seatedIds.includes(m.id)&&(m.name.toLowerCase().includes(searchTerm)||m.primaryRole.toLowerCase().includes(searchTerm))); let memberDiv=document.getElementById('tactics-member-list'); if(memberDiv) memberDiv.innerHTML=available.map(m=>`<div class="flex justify-between items-center p-2 bg-stone-900 rounded-xl cursor-pointer border ${selectedMemberForSeat===m.id?'border-red-500 bg-red-950/30':'border-stone-800'}" onclick="selectMemberForBoat('${m.id}')"><div><span class="text-xl">${m.avatar}</span> <span class="font-bold">${m.name}</span><div class="text-[10px] text-stone-400">${m.weight}kg · ${m.primaryRole}</div></div></div>`).join(''); updateSeatsUI(); }
+    // 出賽配重 (保留原有)
+    function renderTacticsUI(){ 
+        let searchTerm = document.getElementById('tactics-search')?.value.toLowerCase()||''; 
+        let seatedIds = Object.values(currentBoatSetup); 
+        let available = members.filter(m=>!seatedIds.includes(m.id)&&(m.name.toLowerCase().includes(searchTerm)||m.primaryRole.toLowerCase().includes(searchTerm))); 
+        let memberDiv = document.getElementById('tactics-member-list'); 
+        if(memberDiv) memberDiv.innerHTML = available.map(m => `<div class="flex justify-between items-center p-2 bg-stone-900 rounded-xl cursor-pointer border ${selectedMemberForSeat===m.id?'border-red-500 bg-red-950/30':'border-stone-800'}" onclick="selectMemberForBoat('${m.id}')"><div><span class="text-xl">${m.avatar}</span> <span class="font-bold">${m.name}</span><div class="text-[10px] text-stone-400">${m.weight}kg · ${m.primaryRole}</div></div></div>`).join(''); 
+        updateSeatsUI(); 
+    }
     function selectMemberForBoat(id){ selectedMemberForSeat=id; renderTacticsUI(); }
     function tryPlaceSeat(seatKey){ if(!selectedMemberForSeat) alert('請先點擊隊員'); else { currentBoatSetup[seatKey]=selectedMemberForSeat; selectedMemberForSeat=null; renderTacticsUI(); } }
     function clearAllSeats(){ currentBoatSetup={}; selectedMemberForSeat=null; renderTacticsUI(); }
     function setBoatType(type){ boatType=type; clearAllSeats(); document.getElementById('boat-small-btn').className=type==='small'?'px-4 py-2 rounded-xl bg-red-600 text-sm font-bold':'px-4 py-2 rounded-xl bg-stone-800 text-sm font-bold'; document.getElementById('boat-medium-btn').className=type==='medium'?'px-4 py-2 rounded-xl bg-red-600 text-sm font-bold':'px-4 py-2 rounded-xl bg-stone-800 text-sm font-bold'; }
-    function autoBalanceByAI(){ let paddlers=members.filter(m=>m.primaryRole.includes('槳手')); paddlers.sort((a,b)=>b.weight-a.weight); let newSetup={}; let max=boatType==='small'?5:10, leftIdx=1,rightIdx=1,leftW=0,rightW=0; paddlers.forEach(p=>{ if(leftW<=rightW && leftIdx<=max){ newSetup[`port_${leftIdx++}`]=p.id; leftW+=p.weight;} else if(rightIdx<=max){ newSetup[`starboard_${rightIdx++}`]=p.id; rightW+=p.weight;}}); let drummer=members.find(m=>m.primaryRole==='鼓手'); if(drummer) newSetup.drummer=drummer.id; let steer=members.find(m=>m.primaryRole==='舵手'); if(steer) newSetup.steersman=steer.id; currentBoatSetup=newSetup; selectedMemberForSeat=null; renderTacticsUI(); alert('AI平衡完成'); }
-    function updateSeatsUI(){ let drumDiv=document.getElementById('drummer-seat'), steerDiv=document.getElementById('steersman-seat'), grid=document.getElementById('paddler-seats-grid'); if(!drumDiv) return; let pairCount=boatType==='small'?5:10; grid.innerHTML=''; for(let i=1;i<=pairCount;i++){ let portDiv=document.createElement('div'); portDiv.className=`seat-item bg-stone-900 border rounded-xl p-2 text-center cursor-pointer text-xs`; portDiv.onclick=()=>tryPlaceSeat(`port_${i}`); let starDiv=document.createElement('div'); starDiv.className=`seat-item bg-stone-900 border rounded-xl p-2 text-center cursor-pointer text-xs`; starDiv.onclick=()=>tryPlaceSeat(`starboard_${i}`); let pMember=currentBoatSetup[`port_${i}`]?members.find(m=>m.id===currentBoatSetup[`port_${i}`]):null; let sMember=currentBoatSetup[`starboard_${i}`]?members.find(m=>m.id===currentBoatSetup[`starboard_${i}`]):null; portDiv.innerText=pMember?`${pMember.avatar} ${pMember.name}`:`⬅️ 左槳${i}`; starDiv.innerText=sMember?`${sMember.avatar} ${sMember.name}`:`右槳${i} ➡️`; grid.appendChild(portDiv); grid.appendChild(starDiv); } let drummer=currentBoatSetup.drummer?members.find(m=>m.id===currentBoatSetup.drummer):null; let steersman=currentBoatSetup.steersman?members.find(m=>m.id===currentBoatSetup.steersman):null; drumDiv.innerText=drummer?`🥁 ${drummer.avatar} ${drummer.name}`:'🥁 鼓手座位'; steerDiv.innerText=steersman?`🧭 ${steersman.avatar} ${steersman.name}`:'🧭 舵手座位'; let left=0,right=0; Object.entries(currentBoatSetup).forEach(([k,id])=>{ let m=members.find(x=>x.id===id); if(m){ if(k.startsWith('port')) left+=m.weight; if(k.startsWith('starboard')) right+=m.weight; } }); document.getElementById('weight-port-display').innerText=left; document.getElementById('weight-starboard-display').innerText=right; document.getElementById('balance-tip').innerHTML=Math.abs(left-right)<=5?'⚖️ 平衡':(left>right?'⚠️ 左舷重':'⚠️ 右舷重'); }
+    function autoBalanceByAI(){ 
+        let paddlers = members.filter(m=>m.primaryRole.includes('槳手')); 
+        paddlers.sort((a,b)=>b.weight - a.weight); 
+        let newSetup = {}; 
+        let max = boatType==='small'?5:10, leftIdx=1, rightIdx=1, leftW=0, rightW=0; 
+        paddlers.forEach(p => { 
+            if(leftW <= rightW && leftIdx <= max){ newSetup[`port_${leftIdx++}`] = p.id; leftW += p.weight; } 
+            else if(rightIdx <= max){ newSetup[`starboard_${rightIdx++}`] = p.id; rightW += p.weight; } 
+        }); 
+        let drummer = members.find(m=>m.primaryRole==='鼓手'); if(drummer) newSetup.drummer = drummer.id; 
+        let steer = members.find(m=>m.primaryRole==='舵手'); if(steer) newSetup.steersman = steer.id; 
+        currentBoatSetup = newSetup; selectedMemberForSeat = null; renderTacticsUI(); alert('AI平衡完成'); 
+    }
+    function updateSeatsUI(){ 
+        let drumDiv = document.getElementById('drummer-seat'), steerDiv = document.getElementById('steersman-seat'), grid = document.getElementById('paddler-seats-grid'); 
+        if(!drumDiv) return; 
+        let pairCount = boatType==='small'?5:10; 
+        grid.innerHTML = ''; 
+        for(let i=1;i<=pairCount;i++){ 
+            let portDiv = document.createElement('div'); 
+            portDiv.className = `seat-item bg-stone-900 border rounded-xl p-2 text-center cursor-pointer text-xs`; 
+            portDiv.onclick = () => tryPlaceSeat(`port_${i}`); 
+            let starDiv = document.createElement('div'); 
+            starDiv.className = `seat-item bg-stone-900 border rounded-xl p-2 text-center cursor-pointer text-xs`; 
+            starDiv.onclick = () => tryPlaceSeat(`starboard_${i}`); 
+            let pMember = currentBoatSetup[`port_${i}`] ? members.find(m=>m.id===currentBoatSetup[`port_${i}`]) : null; 
+            let sMember = currentBoatSetup[`starboard_${i}`] ? members.find(m=>m.id===currentBoatSetup[`starboard_${i}`]) : null; 
+            portDiv.innerText = pMember ? `${pMember.avatar} ${pMember.name}` : `⬅️ 左槳${i}`; 
+            starDiv.innerText = sMember ? `${sMember.avatar} ${sMember.name}` : `右槳${i} ➡️`; 
+            grid.appendChild(portDiv); grid.appendChild(starDiv); 
+        } 
+        let drummer = currentBoatSetup.drummer ? members.find(m=>m.id===currentBoatSetup.drummer) : null; 
+        let steersman = currentBoatSetup.steersman ? members.find(m=>m.id===currentBoatSetup.steersman) : null; 
+        drumDiv.innerText = drummer ? `🥁 ${drummer.avatar} ${drummer.name}` : '🥁 鼓手座位'; 
+        steerDiv.innerText = steersman ? `🧭 ${steersman.avatar} ${steersman.name}` : '🧭 舵手座位'; 
+        let left=0, right=0; 
+        Object.entries(currentBoatSetup).forEach(([k,id]) => { 
+            let m = members.find(x=>x.id===id); 
+            if(m){ if(k.startsWith('port')) left += m.weight; if(k.startsWith('starboard')) right += m.weight; } 
+        }); 
+        document.getElementById('weight-port-display').innerText = left; 
+        document.getElementById('weight-starboard-display').innerText = right; 
+        document.getElementById('balance-tip').innerHTML = Math.abs(left-right)<=5 ? '⚖️ 平衡' : (left>right ? '⚠️ 左舷重' : '⚠️ 右舷重'); 
+    }
     
-    // 登入&Tab
+    // 登入與頁籤切換
     function openAdminLogin(){ document.getElementById('admin-login-modal').classList.remove('hidden'); }
     function closeAdminModal(){ document.getElementById('admin-login-modal').classList.add('hidden'); }
-    function checkAdminLogin(){ let pwd=document.getElementById('admin-pwd').value; if(pwd==='dragon2026'){ closeAdminModal(); document.getElementById('admin-panel').classList.remove('hidden'); renderAdminMemberTable(); renderAdminPracticeList(); renderAdminRaceTable(); document.getElementById('admin-next-race-name').value=nextRace.name; document.getElementById('admin-next-race-date').value=nextRace.date; } else alert('密碼錯誤'); }
+    function checkAdminLogin(){ 
+        let pwd = document.getElementById('admin-pwd').value; 
+        if(pwd === 'dragon2026'){ 
+            closeAdminModal(); 
+            document.getElementById('admin-panel').classList.remove('hidden'); 
+            renderAdminMemberTable(); 
+            renderAdminPracticeList(); 
+            renderAdminRaceTable(); 
+            document.getElementById('admin-next-race-name').value = nextRace.name; 
+            document.getElementById('admin-next-race-date').value = nextRace.date; 
+        } else alert('密碼錯誤'); 
+    }
     function closeAdminPanel(){ document.getElementById('admin-panel').classList.add('hidden'); }
-    function switchMainTab(tab){ ['home','roster','tactics','records','rank'].forEach(t=>document.getElementById(`${t}-section`).classList.add('hidden')); document.getElementById(`${tab}-section`).classList.remove('hidden'); if(tab==='tactics') renderTacticsUI(); if(tab==='records') renderRaceTable(); if(tab==='home') renderHome(); ['home','roster','tactics','records','rank'].forEach(t=>{ let btn=document.getElementById(`tab-${t}`); if(btn) btn.className=(t===tab)?'px-3 py-1.5 text-xs font-black rounded-xl bg-red-600 text-white shadow':'px-3 py-1.5 text-xs font-black rounded-xl text-stone-400';}); }
+    function switchMainTab(tab){ 
+        ['home','roster','tactics','records','rank'].forEach(t => document.getElementById(`${t}-section`).classList.add('hidden')); 
+        document.getElementById(`${tab}-section`).classList.remove('hidden'); 
+        if(tab === 'tactics') renderTacticsUI(); 
+        if(tab === 'records') renderRaceTable(); 
+        if(tab === 'home') renderHome(); 
+        ['home','roster','tactics','records','rank'].forEach(t => { 
+            let btn = document.getElementById(`tab-${t}`); 
+            if(btn) btn.className = (t===tab) ? 'px-3 py-1.5 text-xs font-black rounded-xl bg-red-600 text-white shadow' : 'px-3 py-1.5 text-xs font-black rounded-xl text-stone-400'; 
+        }); 
+    }
     
+    // 啟動
     loadData(); 
     renderRoster(); 
     renderRanking(); 
