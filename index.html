@@ -103,6 +103,8 @@
 <div class="flex gap-2">
     <button onclick="openManualPracticeAdmin()" class="bg-red-950/50 px-4 py-2 rounded-lg text-sm">✍️ 手動新增操練</button>
     <button onclick="openPracticeSheetImport()" class="bg-stone-700 px-4 py-2 rounded-lg text-sm">📎 從 Google Sheet 匯入操練紀錄</button>
+    <button onclick="openLocalPracticeCsv()" class="bg-stone-700 px-4 py-2 rounded-lg text-sm">📁 本地上傳 CSV</button>
+
 </div>
             <div><h4 class="font-bold text-sm">操練日誌</h4><div id="admin-practice-list" class="max-h-64 overflow-y-auto space-y-2 mt-2"></div></div>
         </div>
@@ -158,16 +160,15 @@
 
     // 預設隊員 (無身高)
     const defaultMembers = [
-        { id:"m1", name:"大豪", primaryRole:"左槳手", secondaryRole:"右槳手", weight:88, avatar:"💪", cheers:12 },
-        { id:"m2", name:"小敏", primaryRole:"左槳手", secondaryRole:"無", weight:52, avatar:"👩‍端", cheers:8 },
-        { id:"m3", name:"阿澤", primaryRole:"左槳手", secondaryRole:"鼓手", weight:70, avatar:"⚡", cheers:15 },
-        { id:"m4", name:"志強", primaryRole:"右槳手", secondaryRole:"左槳手", weight:92, avatar:"🔥", cheers:14 },
-        { id:"m5", name:"小莉", primaryRole:"鼓手", secondaryRole:"舵手", weight:45, avatar:"🔥", cheers:22 },
-        { id:"m6", name:"老張", primaryRole:"舵手", secondaryRole:"無", weight:73, avatar:"😎", cheers:18 },
-        { id:"m7", name:"阿全", primaryRole:"左槳手", secondaryRole:"無", weight:80, avatar:"💪", cheers:3 },
-        { id:"m8", name:"Pinky", primaryRole:"右槳手", secondaryRole:"鼓手", weight:55, avatar:"👩‍端", cheers:5 }
-    ];
-
+    { id:"m1", code:"c01", name:"大豪", primaryRole:"左槳手", secondaryRole:"右槳手", weight:88, avatar:"💪", cheers:12 },
+    { id:"m2", code:"c02", name:"小敏", primaryRole:"左槳手", secondaryRole:"無", weight:52, avatar:"👩‍端", cheers:8 },
+    { id:"m3", code:"c03", name:"阿澤", primaryRole:"左槳手", secondaryRole:"鼓手", weight:70, avatar:"⚡", cheers:15 },
+    { id:"m4", code:"c04", name:"志強", primaryRole:"右槳手", secondaryRole:"左槳手", weight:92, avatar:"🔥", cheers:14 },
+    { id:"m5", code:"c05", name:"小莉", primaryRole:"鼓手", secondaryRole:"舵手", weight:45, avatar:"🔥", cheers:22 },
+    { id:"m6", code:"c06", name:"老張", primaryRole:"舵手", secondaryRole:"無", weight:73, avatar:"😎", cheers:18 },
+    { id:"m7", code:"c07", name:"阿全", primaryRole:"左槳手", secondaryRole:"無", weight:80, avatar:"💪", cheers:3 },
+    { id:"m8", code:"c08", name:"Pinky", primaryRole:"右槳手", secondaryRole:"鼓手", weight:55, avatar:"👩‍端", cheers:5 }
+];
     function loadData() {
         members = JSON.parse(localStorage.getItem('dragon_members') || JSON.stringify(defaultMembers));
         practices = JSON.parse(localStorage.getItem('dragon_practices') || '[]');
@@ -202,13 +203,39 @@
     function editMemberById(id){ let m=members.find(x=>x.id===id); if(m){ document.getElementById('edit-member-id').value=m.id; document.getElementById('member-name').value=m.name; document.getElementById('member-primary').value=m.primaryRole; document.getElementById('member-secondary').value=m.secondaryRole; document.getElementById('member-weight').value=m.weight; document.getElementById('member-avatar').value=m.avatar; document.getElementById('member-form-title').innerText='編輯隊員'; document.getElementById('member-form-modal').classList.remove('hidden'); } }
     function openMemberForm(){ document.getElementById('edit-member-id').value=''; document.getElementById('member-name').value=''; document.getElementById('member-primary').value='左槳手'; document.getElementById('member-secondary').value='無'; document.getElementById('member-weight').value=''; document.getElementById('member-avatar').value='💪'; document.getElementById('member-form-title').innerText='新增隊員'; document.getElementById('member-form-modal').classList.remove('hidden'); }
     function closeMemberForm(){ document.getElementById('member-form-modal').classList.add('hidden');}
-    function saveMemberFromAdmin(){ let id=document.getElementById('edit-member-id').value; let name=document.getElementById('member-name').value; let primary=document.getElementById('member-primary').value; let secondary=document.getElementById('member-secondary').value; let weight=parseInt(document.getElementById('member-weight').value); let avatar=document.getElementById('member-avatar').value; if(!name||!primary||!weight) return; if(id){ let idx=members.findIndex(m=>m.id===id); if(idx!==-1) members[idx]={...members[idx],name,primaryRole:primary,secondaryRole:secondary,weight,avatar}; } else { members.push({id:'m'+Date.now(),name,primaryRole:primary,secondaryRole:secondary,weight,avatar,cheers:0}); } saveAll(); closeMemberForm(); renderAdminMemberTable(); renderRoster(); renderRanking(); renderTacticsUI(); }
+    function saveMemberFromAdmin(){ let id=document.getElementById('edit-member-id').value; let name=document.getElementById('member-name').value; let primary=document.getElementById('member-primary').value; let secondary=document.getElementById('member-secondary').value; let weight=parseInt(document.getElementById('member-weight').value); let avatar=document.getElementById('member-avatar').value; if(!name||!primary||!weight) return; if(id){ let idx=members.findIndex(m=>m.id===id); if(idx!==-1) members[idx]={...members[idx],name,primaryRole:primary,secondaryRole:secondary,weight,avatar}; } 
+    } else { 
+    // 自动生成编号：找到当前最大编号，例如 c01 -> c02
+    let maxNum = 0;
+    members.forEach(m => {
+        let match = m.code.match(/c(\d+)/);
+        if (match) maxNum = Math.max(maxNum, parseInt(match[1]));
+    });
+    let newCode = `c${(maxNum+1).toString().padStart(2,'0')}`;
+    members.push({id:'m'+Date.now(), code:newCode, name, primaryRole:primary, secondaryRole:secondary, weight, avatar, cheers:0});
+} } saveAll(); closeMemberForm(); renderAdminMemberTable(); renderRoster(); renderRanking(); renderTacticsUI(); }
     function renderAdminPracticeList(){ let container=document.getElementById('admin-practice-list'); container.innerHTML=practices.slice().reverse().map(p=>`<div class="bg-stone-800 p-2 rounded-lg flex justify-between"><div>${p.date} ${p.distance}km / ${formatHours(p.hours)} 出席${p.attendees.length}人</div><button onclick="deletePracticeById('${p.id}')" class="text-red-400">刪除</button></div>`).join(''); }
     function deletePracticeById(id){ practices=practices.filter(p=>p.id!==id); saveAll(); renderAdminPracticeList(); renderRoster(); renderRanking(); }
     function openManualPracticeAdmin(){ document.getElementById('practice-manual-modal').classList.remove('hidden'); let div=document.getElementById('manual-attendees-list'); div.innerHTML=members.map(m=>`<label class="flex items-center gap-1"><input type="checkbox" value="${m.id}" class="attend-check"> ${m.name}</label>`).join(''); document.getElementById('manual-date').value=new Date().toISOString().slice(0,10); }
     function closePracticeModal(){ document.getElementById('practice-manual-modal').classList.add('hidden');}
     function saveManualPracticeFromAdmin(){ let date=document.getElementById('manual-date').value; let dist=parseFloat(document.getElementById('manual-distance').value); let hrs=parseFloat(document.getElementById('manual-hours').value); let attendees=Array.from(document.querySelectorAll('#manual-attendees-list input:checked')).map(cb=>cb.value); if(!date||isNaN(dist)||isNaN(hrs)||attendees.length===0) return; practices.push({id:'p'+Date.now(),date,distance:dist,hours:hrs,attendees}); saveAll(); closePracticeModal(); renderAdminPracticeList(); renderRoster(); renderRanking(); }
         // 操練紀錄 Google Sheet 匯入功能
+    function openLocalPracticeCsv() {
+    let input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.csv';
+    input.onchange = function(e) {
+        let file = e.target.files[0];
+        if (!file) return;
+        let reader = new FileReader();
+        reader.onload = function(ev) {
+            let csv = ev.target.result;
+            importPracticeFromSheet(csv);
+        };
+        reader.readAsText(file, 'UTF-8');
+    };
+    input.click();
+}
     function openPracticeSheetImport() {
         let url = prompt('請貼上 Google Sheet 發布的 CSV 連結 (包含標題列: 日期,距離(km),時數(h),出席隊員(姓名以逗號分隔))');
         if (url) {
@@ -217,7 +244,17 @@
             }).catch(err => alert('讀取失敗: ' + err));
         }
     }
-
+// 根据编号或姓名查找队员 (优先编号，再姓名，不区分大小写)
+function findMemberByIdentifier(identifier) {
+    if (!identifier) return null;
+    let trimmed = identifier.trim();
+    // 先按编号匹配 (格式 c01, c02)
+    let member = members.find(m => m.code === trimmed);
+    if (member) return member;
+    // 再按姓名匹配 (不区分大小写)
+    member = members.find(m => m.name.toLowerCase() === trimmed.toLowerCase());
+    return member;
+}
 function importPracticeFromSheet(csv) {
     const lines = csv.split(/\r?\n/);
     if (lines.length < 2) { alert('CSV 至少包含標題列和一行數據'); return; }
@@ -304,11 +341,8 @@ function importPracticeFromSheet(csv) {
         const attendees = [];
         for (let name of memberNames) {
             // 不区分大小写匹配
-            const member = members.find(m => 
-                m.name === name || 
-                m.name.toLowerCase() === name.toLowerCase()
-            );
-            if (member) {
+            const member = findMemberByIdentifier(name);
+if (member) {
                 attendees.push(member.id);
             } else {
                 failedNames.add(name);
