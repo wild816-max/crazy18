@@ -82,6 +82,10 @@
         
         <!-- 隊員資料庫 (顯示編號) -->
         <div class="bg-stone-900 rounded-2xl p-5"><div class="flex justify-between"><h3 class="font-black text-lg">📋 隊員資料庫 (編號僅管理顯示)</h3><button onclick="openMemberForm()" class="bg-red-600 px-3 py-1 rounded-xl text-xs">+ 新增隊員</button></div><div class="overflow-x-auto mt-3"><table class="w-full text-xs"><thead><tr class="text-stone-400"><th>編號</th><th>頭像</th><th>姓名</th><th>主崗位</th><th>副崗位</th><th>體重</th><th>操作</th> </tr></thead><tbody id="admin-member-table"></tbody></table></div><div class="flex gap-2 mt-4"><button onclick="openSheetImport()" class="border border-dashed border-stone-600 py-2 rounded-xl text-xs text-stone-400 w-full">📎 從Google Sheet CSV匯入隊員</button><button onclick="openFullExcelImport()" class="bg-stone-700 py-2 rounded-xl text-xs w-full">📂 匯入Excel (完整覆蓋隊員+操練)</button></div></div>
+        <div class="flex gap-2 mt-3">
+    <button onclick="exportDataToFile()" class="bg-stone-800 py-2 rounded-xl text-xs w-full border border-stone-600">📤 導出數據 (JSON備份)</button>
+    <button onclick="importDataFromFile()" class="bg-stone-700 py-2 rounded-xl text-xs w-full">📥 導入數據 (恢復備份)</button>
+</div>
         
         <!-- 操練管理（可修改每則記錄） -->
         <div class="bg-stone-900 rounded-2xl p-5 space-y-4"><h3 class="font-black text-lg">🚣 操練紀錄管理</h3>
@@ -166,6 +170,69 @@
         let nr = localStorage.getItem('dragon_next_race');
         if(nr) nextRace = JSON.parse(nr);
         saveAll();
+        // 導出所有數據為 JSON 文件
+function exportDataToFile() {
+    const exportData = {
+        members: members,
+        practices: practices,
+        raceRecords: raceRecords,
+        nextRace: nextRace,
+        version: '1.0'
+    };
+    const jsonStr = JSON.stringify(exportData, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `crazy18_backup_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    alert('數據已導出，請保存好 JSON 文件');
+}
+
+// 從 JSON 文件導入數據並覆蓋
+function importDataFromFile() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'application/json';
+    input.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const text = await file.text();
+        try {
+            const data = JSON.parse(text);
+            // 驗證數據結構
+            if (data.members && data.practices && data.raceRecords && data.nextRace) {
+                members = data.members;
+                practices = data.practices;
+                raceRecords = data.raceRecords;
+                nextRace = data.nextRace;
+                // 重新分配編號並標準化日期
+                assignMemberCodes();
+                practices = practices.map(p => ({ ...p, date: normalizeDate(p.date) || p.date }));
+                saveAll();
+                // 刷新所有界面
+                renderAdminMemberTable();
+                renderAdminPracticeList();
+                renderAdminRaceTable();
+                renderRoster();
+                renderRanking();
+                renderRaceTable();
+                renderHome();
+                renderTacticsUI();
+                alert('數據導入成功！頁面已更新。');
+            } else {
+                alert('無效的備份文件：缺少必要欄位');
+            }
+        } catch (err) {
+            alert('解析失敗：文件格式錯誤');
+            console.error(err);
+        }
+    };
+    input.click();
+}
     }
     function saveAll() { localStorage.setItem('dragon_members_v2', JSON.stringify(members)); localStorage.setItem('dragon_practices_v2', JSON.stringify(practices)); localStorage.setItem('dragon_race_records_v2', JSON.stringify(raceRecords)); localStorage.setItem('dragon_next_race', JSON.stringify(nextRace)); }
     
