@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-    <meta charset="UTF-8">
+    <meta charimportPracticeFromSheetset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
     <title>Crazy18 Dragon Boat Team</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -218,32 +218,43 @@
         }
     }
 
-   function importPracticeFromSheet(csv) {
+function importPracticeFromSheet(csv) {
     const lines = csv.split(/\r?\n/);
     if (lines.length < 2) { alert('CSV 至少包含標題列和一行數據'); return; }
-    const headers = lines[0].split(',').map(h => h.trim());
+
+    // 解析标题行，兼容 BOM 头
+    let headerLine = lines[0].trim();
+    if (headerLine.charCodeAt(0) === 0xFEFF) headerLine = headerLine.slice(1);
+    const headers = headerLine.split(',').map(h => h.trim());
+    
     const dateIdx = headers.findIndex(h => h.includes('日期'));
-    const distIdx = headers.findIndex(h => h.includes('距離') || h.includes('km'));
-    const hoursIdx = headers.findIndex(h => h.includes('時數') || h.includes('小時') || h.includes('h'));
+    const distIdx = headers.findIndex(h => h.includes('距離') || h.toLowerCase().includes('km'));
+    const hoursIdx = headers.findIndex(h => h.includes('時數') || h.includes('小時') || h.toLowerCase().includes('h'));
     const membersIdx = headers.findIndex(h => h.includes('出席') || h.includes('隊員'));
+    
     if (dateIdx === -1 || distIdx === -1 || hoursIdx === -1 || membersIdx === -1) {
-        alert('CSV 標題列必須包含: 日期, 距離, 時數, 出席隊員');
+        alert(`CSV 標題列缺少必要欄位。找到的欄位：${headers.join(', ')}\n需要包含：日期, 距離, 時數, 出席隊員`);
         return;
     }
 
-    // 輔助函數：將 "2026年5月28日" 轉為 "2026-05-28"
+    // ========== 輔助函數 ==========
+    // 日期轉換：2026年5月28日 → 2026-05-28
     function parseDateToYMD(dateStr) {
         let match = dateStr.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);
         if (match) {
             let year = match[1], month = match[2].padStart(2,'0'), day = match[3].padStart(2,'0');
             return `${year}-${month}-${day}`;
         }
-        // 若已是 YYYY-MM-DD 則直接返回
-        if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+        // 支援 2026/5/28 或 2026-5-28
+        let match2 = dateStr.match(/(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+        if (match2) {
+            let year = match2[1], month = match2[2].padStart(2,'0'), day = match2[3].padStart(2,'0');
+            return `${year}-${month}-${day}`;
+        }
         return null;
     }
 
-    // 輔助函數：將 "5,501 公尺" / "8.86 km" 轉為公里數
+    // 距離轉換：5,501 公尺 → 5.501 km；8.86 km → 8.86
     function parseDistanceToKm(distStr) {
         let numMatch = distStr.match(/(\d+(?:[.,]\d+)?)/);
         if (!numMatch) return NaN;
@@ -251,29 +262,45 @@
         if (distStr.includes('公尺') || distStr.includes('米')) {
             return num / 1000;
         }
-        return num; // 假設已是公里
+        return num;
     }
 
-    // 輔助函數：將 "1:01:23" 轉為小時數
+    // 時間轉換：1:01:23 → 1.023 小時；1小時30分 → 1.5
     function parseTimeToHours(timeStr) {
+        // 格式 HH:MM:SS
         let parts = timeStr.split(':');
         if (parts.length === 3) {
             let h = parseInt(parts[0]), m = parseInt(parts[1]), s = parseInt(parts[2]);
-            return h + m/60 + s/3600;
+            if (!isNaN(h) && !isNaN(m) && !isNaN(s)) return h + m/60 + s/3600;
         }
+        // 格式 1小時30分
+        let match = timeStr.match(/(\d+)\s*小時\s*(\d+)\s*分/);
+        if (match) {
+            return parseInt(match[1]) + parseInt(match[2])/60;
+        }
+        // 純小時小數
+        let hourNum = parseFloat(timeStr);
+        if (!isNaN(hourNum)) return hourNum;
         return NaN;
     }
 
+    // ========== 處理每一行 ==========
     let importedCount = 0, skipCount = 0;
+    const failedNames = new Set(); // 記錄未匹配到的隊員名
+
     for (let i = 1; i < lines.length; i++) {
         const line = lines[i].trim();
         if (!line) continue;
+        
         const cols = line.split(',').map(c => c.trim());
-        if (cols.length < 4) continue;
+        if (cols.length < 4) {
+            skipCount++;
+            continue;
+        }
 
-        let rawDate = cols[dateIdx];
-        let rawDist = cols[distIdx];
-        let rawHours = cols[hoursIdx];
+        const rawDate = cols[dateIdx];
+        const rawDist = cols[distIdx];
+        const rawHours = cols[hoursIdx];
         let memberNames = cols[membersIdx].split(/[,;、]+/).map(n => n.trim()).filter(n => n);
 
         const date = parseDateToYMD(rawDate);
@@ -285,20 +312,29 @@
             continue;
         }
 
+        // 匹配隊員（不區分大小寫，去除空白）
         const attendees = [];
         for (let name of memberNames) {
-            // 嘗試精確匹配或忽略大小寫
-            const member = members.find(m => m.name === name || m.name.toLowerCase() === name.toLowerCase());
-            if (member) attendees.push(member.id);
-            else console.warn(`未找到隊員: ${name}`);
+            const member = members.find(m => 
+                m.name === name || 
+                m.name.toLowerCase() === name.toLowerCase() ||
+                m.name === name.replace(/\s/g, '')
+            );
+            if (member) {
+                attendees.push(member.id);
+            } else {
+                failedNames.add(name);
+                console.warn(`未找到隊員: ${name}`);
+            }
         }
+
         if (attendees.length === 0) {
             skipCount++;
             continue;
         }
 
         practices.push({
-            id: 'p_' + Date.now() + '_' + i,
+            id: 'p_' + Date.now() + '_' + i + '_' + Math.random(),
             date: date,
             distance: dist,
             hours: hours,
@@ -312,9 +348,13 @@
         renderAdminPracticeList();
         renderRoster();
         renderRanking();
-        alert(`成功匯入 ${importedCount} 筆操練紀錄，跳過 ${skipCount} 筆無效資料`);
+        let warnMsg = '';
+        if (failedNames.size > 0) {
+            warnMsg = `\n\n⚠️ 以下隊員在系統中不存在，請先新增他們：\n${Array.from(failedNames).join(', ')}`;
+        }
+        alert(`成功匯入 ${importedCount} 筆操練紀錄，跳過 ${skipCount} 筆無效資料。${warnMsg}`);
     } else {
-        alert('沒有匯入任何有效的操練紀錄，請檢查 CSV 格式和隊員姓名是否匹配');
+        alert(`沒有匯入任何操練紀錄。可能原因：\n1. 隊員姓名不存在系統中（請檢查「隊員資料庫」）\n2. CSV 格式錯誤（請確保標題列為：日期,距離,時數,出席隊員）\n3. 日期/距離/時間格式不支援`);
     }
 }
     // OCR 處理
